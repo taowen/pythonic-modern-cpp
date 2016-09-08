@@ -9,5 +9,9 @@
         "prism",
         "-highlight"
     ],
-    "pluginsConfig": {}
+    "pluginsConfig": {
+        "github": {
+            "url": "https://github.com/taowen/pythonic-modern-cpp"
+        }
+    }
 }
