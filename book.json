@@ -5,9 +5,7 @@
         "-sharing",
         "include-codeblock",
         "injection",
-        "github",
-        "prism",
-        "-highlight"
+        "github"
     ],
     "pluginsConfig": {
         "github": {
