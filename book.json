@@ -3,7 +3,8 @@
         "theme-faq",
         "highlight",
         "include-codeblock",
-        "ga"
+        "ga",
+        "injection"
     ],
     "pluginsConfig": {}
 }
