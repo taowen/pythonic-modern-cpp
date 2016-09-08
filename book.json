@@ -4,9 +4,7 @@
         "-fontsettngs",
         "-sharing",
         "include-codeblock",
-        "ga",
         "injection",
-        "disqus",
         "github",
         "prism",
         "-highlight"
