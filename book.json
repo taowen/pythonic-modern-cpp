@@ -4,12 +4,8 @@
         "-fontsettngs",
         "-sharing",
         "include-codeblock",
-        "injection",
-        "github"
+        "injection"
     ],
     "pluginsConfig": {
-        "github": {
-            "url": "https://github.com/taowen/pythonic-modern-cpp"
-        }
     }
 }

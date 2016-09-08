@@ -1,3 +1,137 @@
-.faq-page pre {
+.faq-page pre,
+.faq-page code {
+    /* Tomorrow Night Bright Theme */
+    /* Original theme - https://github.com/chriskempson/tomorrow-theme */
+    /* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+    /* Tomorrow Comment */
+    /* Tomorrow Red */
+    /* Tomorrow Orange */
+    /* Tomorrow Yellow */
+    /* Tomorrow Green */
+    /* Tomorrow Aqua */
+    /* Tomorrow Blue */
+    /* Tomorrow Purple */
+}
+.faq-page pre .hljs-comment,
+.faq-page code .hljs-comment,
+.faq-page pre .hljs-title,
+.faq-page code .hljs-title {
+    color: #969896;
+}
+.faq-page pre .hljs-variable,
+.faq-page code .hljs-variable,
+.faq-page pre .hljs-attribute,
+.faq-page code .hljs-attribute,
+.faq-page pre .hljs-tag,
+.faq-page code .hljs-tag,
+.faq-page pre .hljs-regexp,
+.faq-page code .hljs-regexp,
+.faq-page pre .hljs-deletion,
+.faq-page code .hljs-deletion,
+.faq-page pre .ruby .hljs-constant,
+.faq-page code .ruby .hljs-constant,
+.faq-page pre .xml .hljs-tag .hljs-title,
+.faq-page code .xml .hljs-tag .hljs-title,
+.faq-page pre .xml .hljs-pi,
+.faq-page code .xml .hljs-pi,
+.faq-page pre .xml .hljs-doctype,
+.faq-page code .xml .hljs-doctype,
+.faq-page pre .html .hljs-doctype,
+.faq-page code .html .hljs-doctype,
+.faq-page pre .css .hljs-id,
+.faq-page code .css .hljs-id,
+.faq-page pre .css .hljs-class,
+.faq-page code .css .hljs-class,
+.faq-page pre .css .hljs-pseudo,
+.faq-page code .css .hljs-pseudo {
+    color: #d54e53;
+}
+.faq-page pre .hljs-number,
+.faq-page code .hljs-number,
+.faq-page pre .hljs-preprocessor,
+.faq-page code .hljs-preprocessor,
+.faq-page pre .hljs-pragma,
+.faq-page code .hljs-pragma,
+.faq-page pre .hljs-built_in,
+.faq-page code .hljs-built_in,
+.faq-page pre .hljs-literal,
+.faq-page code .hljs-literal,
+.faq-page pre .hljs-params,
+.faq-page code .hljs-params,
+.faq-page pre .hljs-constant,
+.faq-page code .hljs-constant {
+    color: #e78c45;
+}
+.faq-page pre .ruby .hljs-class .hljs-title,
+.faq-page code .ruby .hljs-class .hljs-title,
+.faq-page pre .css .hljs-rules .hljs-attribute,
+.faq-page code .css .hljs-rules .hljs-attribute {
+    color: #e7c547;
+}
+.faq-page pre .hljs-string,
+.faq-page code .hljs-string,
+.faq-page pre .hljs-value,
+.faq-page code .hljs-value,
+.faq-page pre .hljs-inheritance,
+.faq-page code .hljs-inheritance,
+.faq-page pre .hljs-header,
+.faq-page code .hljs-header,
+.faq-page pre .hljs-addition,
+.faq-page code .hljs-addition,
+.faq-page pre .ruby .hljs-symbol,
+.faq-page code .ruby .hljs-symbol,
+.faq-page pre .xml .hljs-cdata,
+.faq-page code .xml .hljs-cdata {
+    color: #b9ca4a;
+}
+.faq-page pre .css .hljs-hexcolor,
+.faq-page code .css .hljs-hexcolor {
+    color: #70c0b1;
+}
+.faq-page pre .hljs-function,
+.faq-page code .hljs-function,
+.faq-page pre .python .hljs-decorator,
+.faq-page code .python .hljs-decorator,
+.faq-page pre .python .hljs-title,
+.faq-page code .python .hljs-title,
+.faq-page pre .ruby .hljs-function .hljs-title,
+.faq-page code .ruby .hljs-function .hljs-title,
+.faq-page pre .ruby .hljs-title .hljs-keyword,
+.faq-page code .ruby .hljs-title .hljs-keyword,
+.faq-page pre .perl .hljs-sub,
+.faq-page code .perl .hljs-sub,
+.faq-page pre .javascript .hljs-title,
+.faq-page code .javascript .hljs-title,
+.faq-page pre .coffeescript .hljs-title,
+.faq-page code .coffeescript .hljs-title {
+    color: #7aa6da;
+}
+.faq-page pre .hljs-keyword,
+.faq-page code .hljs-keyword,
+.faq-page pre .javascript .hljs-function,
+.faq-page code .javascript .hljs-function {
+    color: #c397d8;
+}
+.faq-page pre,
+.faq-page code {
+    display: block;
     background: black;
+    color: #eaeaea;
+    padding: 0.5em;
+}
+.faq-page pre .coffeescript .javascript,
+.faq-page code .coffeescript .javascript,
+.faq-page pre .javascript .xml,
+.faq-page code .javascript .xml,
+.faq-page pre .tex .hljs-formula,
+.faq-page code .tex .hljs-formula,
+.faq-page pre .xml .javascript,
+.faq-page code .xml .javascript,
+.faq-page pre .xml .vbscript,
+.faq-page code .xml .vbscript,
+.faq-page pre .xml .css,
+.faq-page code .xml .css,
+.faq-page pre .xml .hljs-cdata,
+.faq-page code .xml .hljs-cdata {
+    opacity: 0.5;
 }
