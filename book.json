@@ -1,3 +1,8 @@
 {
-    "plugins": [ "theme-faq", "highlight" ]
+    "plugins": [
+        "theme-faq",
+        "highlight",
+        "include-codeblock"
+    ],
+    "pluginsConfig": {}
 }
