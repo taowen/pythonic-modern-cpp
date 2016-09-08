@@ -2,7 +2,8 @@
     "plugins": [
         "theme-faq",
         "highlight",
-        "include-codeblock"
+        "include-codeblock",
+        "ga"
     ],
     "pluginsConfig": {}
 }
