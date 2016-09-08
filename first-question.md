@@ -7,4 +7,4 @@ for i in xrange(6):
 for(const auto& x : view::ints(0, 6)) {
     cout << x * x << endl;
 }
-```
+``` 
