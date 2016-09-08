@@ -112,8 +112,8 @@ pre .javascript .hljs-function,
 code .javascript .hljs-function {
     color: #c397d8;
 }
-pre .hljs,
-code .hljs {
+pre ,
+code {
     display: block;
     background: black;
     color: #eaeaea;
