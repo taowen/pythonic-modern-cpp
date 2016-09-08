@@ -1,10 +1,15 @@
 {
     "plugins": [
         "theme-faq",
-        "highlight",
+        "-fontsettngs",
+        "-sharing",
         "include-codeblock",
         "ga",
-        "injection"
+        "injection",
+        "disqus",
+        "github",
+        "prism",
+        "-highlight"
     ],
     "pluginsConfig": {}
 }
