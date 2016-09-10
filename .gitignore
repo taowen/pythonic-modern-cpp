@@ -14,5 +14,6 @@ _book
 *.epub
 *.mobi
 *.pdf
+*.iml
 
 /.idea
