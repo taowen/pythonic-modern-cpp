@@ -17,3 +17,4 @@ _book
 *.iml
 
 /.idea
+/_vendor/_update
