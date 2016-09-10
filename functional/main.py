@@ -6,4 +6,4 @@ class Test(unittest.TestCase):
         ### [fc001]
         for i in xrange(6):
             print(i ** 2)
-            ### [fc001]
+        ### [fc001]
