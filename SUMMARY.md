@@ -6,7 +6,8 @@
 * [for color in colors](functional/002.md)
 * [reversed(colors)](functional/003.md)
 * [zip(names, colors)](functional/004.md)
+* [enumerate(colors)](functional/005.md)
 
 ## string
 
-* [How can I do X?](second-question.md)
+* ['hello world'[4:7]](string/001.md)

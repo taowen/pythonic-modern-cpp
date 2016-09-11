@@ -31,3 +31,10 @@ class Test(unittest.TestCase):
             ('matthew', 'blue')
         ], zip(names, colors))
         #! [004]
+
+    def test_005(self):
+        #! [005]
+        colors = ['red', 'green', 'blue', 'yellow']
+        for i, color in enumerate(colors):
+            print(i, color)
+        #! [005]
