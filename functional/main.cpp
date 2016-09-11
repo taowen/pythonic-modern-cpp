@@ -78,3 +78,22 @@ TEST_CASE("007") {
         (sorted | to_vector));
   //! [007]
 }
+
+TEST_CASE("008") {
+  //! [008]
+  auto colors = vector<string>{"red", "green", "blue", "yellow"};
+  auto sorted = action::sort(colors, greater<string>());
+  CHECK((vector<string>{"yellow", "red", "green", "blue"}) ==
+        (sorted | to_vector));
+  //! [008]
+}
+
+TEST_CASE("009") {
+  //! [009]
+  auto colors = vector<string>{"red", "green", "blue", "yellow"};
+  auto sorted =
+      action::sort(colors, less<int>(), [](const auto &e) { return e.size(); });
+  CHECK((vector<string>{"red", "blue", "green", "yellow"}) ==
+        (sorted | to_vector));
+  //! [009]
+}

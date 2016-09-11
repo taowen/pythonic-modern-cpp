@@ -51,3 +51,15 @@ class Test(unittest.TestCase):
         colors = ['red', 'green', 'blue', 'yellow']
         self.assertListEqual(['blue', 'green', 'red', 'yellow'], sorted(colors))
         #! [007]
+
+    def test_008(self):
+        #! [008]
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertListEqual(['yellow', 'red', 'green', 'blue'], sorted(colors, reverse=True))
+        #! [008]
+
+    def test_009(self):
+        #! [009]
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertListEqual(['red', 'blue', 'green', 'yellow'], sorted(colors, key=lambda e: len(e)))
+        #! [009]

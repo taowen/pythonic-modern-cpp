@@ -8,6 +8,9 @@
 * [zip(names, colors)](functional/004.md)
 * [enumerate(colors)](functional/005.md)
 * [for k, v in d.iteritems()](functional/006.md)
+* [sorted(colors)](functional/007.md)
+* [sorted(colors, reverse=True)](functional/008.md)
+* [sorted(colors, key=lambda e: len(e))](functional/009.md)
 
 ## string
 
