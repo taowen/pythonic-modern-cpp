@@ -2,8 +2,8 @@ import unittest
 
 
 class Test(unittest.TestCase):
-    def test_001(self):
-        ### [m001]
+    def test_aaa(self):
+        ### [aaa]
         for i in xrange(6):
             print(i ** 2)
-            ### [m001]
+            ### [aaa]

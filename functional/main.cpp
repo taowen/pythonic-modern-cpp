@@ -13,10 +13,10 @@ using namespace ranges;
 using json = nlohmann::json;
 
 
-TEST_CASE("001") {
-    /// [001]
+TEST_CASE("aaa") {
+    /// [aaa]
     for(auto x : view::ints(0, 6)) {
         cout << x * x << endl;
     }
-    /// [001]
+    /// [aaa]
 }
