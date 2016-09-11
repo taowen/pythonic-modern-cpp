@@ -20,3 +20,4 @@
 ## string
 
 * ['hello world'[4:7]](string/001.md)
+* [""" multi-line """](string/002.md)

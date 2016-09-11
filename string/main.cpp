@@ -19,3 +19,11 @@ TEST_CASE("001") {
   CHECK("o w" == (str1.substr(4, 3)));
   //! [001]
 }
+
+TEST_CASE("002") {
+  //! [002]
+  auto str1 = string_view(R"!!(abc
+def)!!");
+  CHECK("abc\ndef" == str1);
+  //! [002]
+}
