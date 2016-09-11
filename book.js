@@ -9,9 +9,9 @@ module.exports = {
         "include-codeblock"
     ],
     "pluginsConfig": {
-        // "include-codeblock": {
-        //     // Before, create user-template.hbs
-        //     "template": fs.readFileSync(__dirname + "/user-template.hbs", "utf-8")
-        // }
+        "include-codeblock": {
+            // Before, create user-template.hbs
+            "template": fs.readFileSync(__dirname + "/user-template.hbs", "utf-8")
+        }
     }
 };
