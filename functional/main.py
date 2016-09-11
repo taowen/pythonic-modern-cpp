@@ -45,3 +45,9 @@ class Test(unittest.TestCase):
         for k, v in d.iteritems():
             print(k, v)
             #! [006]
+
+    def test_007(self):
+        #! [007]
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertListEqual(['blue', 'green', 'red', 'yellow'], sorted(colors))
+        #! [007]

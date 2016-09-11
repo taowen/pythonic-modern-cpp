@@ -69,3 +69,12 @@ TEST_CASE("006") {
   }
   //! [006]
 }
+
+TEST_CASE("007") {
+  //! [007]
+  auto colors = vector<string>{"red", "green", "blue", "yellow"};
+  auto sorted = action::sort(colors);
+  CHECK((vector<string>{"blue", "green", "red", "yellow"}) ==
+        (sorted | to_vector));
+  //! [007]
+}
