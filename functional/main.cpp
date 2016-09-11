@@ -54,8 +54,18 @@ TEST_CASE("004") {
 TEST_CASE("005") {
   //! [005]
   auto colors = vector<string>{"red", "green", "blue", "yellow"};
-  for (const auto & [ i, color ] : view::zip(view::iota(0), colors)) {
+  for (auto const & [ i, color ] : view::zip(view::iota(0), colors)) {
     cout << i << " " << color << endl;
   }
   //! [005]
+}
+
+TEST_CASE("006") {
+  //! [006]
+  auto d = unordered_map<string, string>{
+      {"matthew", "blue"}, {"rachel", "green"}, {"raymond", "red"}};
+  for (auto const & [ k, v ] : d) {
+    cout << k << " " << v << endl;
+  }
+  //! [006]
 }

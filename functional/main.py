@@ -37,4 +37,11 @@ class Test(unittest.TestCase):
         colors = ['red', 'green', 'blue', 'yellow']
         for i, color in enumerate(colors):
             print(i, color)
-        #! [005]
+            #! [005]
+
+    def test_006(self):
+        #! [006]
+        d = {'matthew': 'blue', 'rachel': 'green', 'raymond': 'red'}
+        for k, v in d.iteritems():
+            print(k, v)
+            #! [006]

@@ -7,6 +7,7 @@
 * [reversed(colors)](functional/003.md)
 * [zip(names, colors)](functional/004.md)
 * [enumerate(colors)](functional/005.md)
+* [for k, v in d.iteritems()](functional/006.md)
 
 ## string
 
