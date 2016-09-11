@@ -14,3 +14,9 @@ class Test(unittest.TestCase):
         for color in colors:
             print(color)
             #! [002]
+
+    def test_003(self):
+        #! [003]
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertListEqual(['yellow', 'blue', 'green', 'red'], list(reversed(colors)))
+        #! [003]

@@ -29,3 +29,12 @@ TEST_CASE("002") {
     }
     //! [002]
 }
+
+TEST_CASE("003") {
+    //! [003]
+    auto colors = vector<string>{"red", "green", "blue", "yellow"};
+    CHECK((vector<string>{"yellow", "blue", "green", "red"})
+          ==
+          (colors | view::reverse | to_vector));
+    //! [003]
+}
