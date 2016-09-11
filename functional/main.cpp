@@ -92,8 +92,65 @@ TEST_CASE("009") {
   //! [009]
   auto colors = vector<string>{"red", "green", "blue", "yellow"};
   auto sorted =
-      action::sort(colors, less<int>(), [](const auto &e) { return e.size(); });
+      action::sort(colors, less<int>(), [](auto const &e) { return e.size(); });
   CHECK((vector<string>{"red", "blue", "green", "yellow"}) ==
         (sorted | to_vector));
   //! [009]
+}
+
+TEST_CASE("010") {
+  //! [010]
+  auto colors = vector<string>{"red", "green", "blue", "yellow"};
+  auto actual = vector<int>{
+      colors | view::transform([](auto const &e) { return e.size(); })};
+  CHECK((vector<int>{3, 5, 4, 6}) == actual);
+  //! [010]
+}
+
+TEST_CASE("011") {
+  //! [011]
+  auto colors = vector<string>{"red", "green", "blue", "yellow"};
+  CHECK(ranges::any_of(colors, [](const auto &e) { return e == "green"; }));
+  //! [011]
+}
+
+TEST_CASE("012") {
+  //! [012]
+  auto colors = vector<string>{"red", "green", "blue", "yellow"};
+  auto colors_view = colors | view::all;
+  CHECK((vector<string>{"green"}) == (colors_view[{1, 2}] | to_vector));
+  CHECK((vector<string>{"red", "green"}) == (colors_view[{0, 2}] | to_vector));
+  CHECK((vector<string>{"green", "blue", "yellow"}) ==
+        (colors_view[{1, ranges::end}] | to_vector));
+  CHECK((vector<string>{"red", "green", "blue"}) ==
+        (colors_view[{0, ranges::end - 1}] | to_vector));
+  //! [012]
+}
+
+TEST_CASE("013") {
+  //! [013]
+  auto d = unordered_map<string, string>{
+      {"matthew", "blue"}, {"rachel", "green"}, {"raymond", "red"}};
+  // 取出 keys，此处不是lazy操作
+  auto keys = vector<string>{d | view::keys};
+  for (const auto &k : keys) {
+    if (k.find("r") == 0) {
+      // 因为 keys 不是lazy操作，此处的删除不会影响遍历
+      d.erase(k);
+    }
+  }
+  CHECK((unordered_map<string, string>{{"matthew", "blue"}}) == d);
+  //! [013]
+}
+
+TEST_CASE("014") {
+  //! [014]
+  auto colors = vector<string>{"red", "green", "blue", "yellow"};
+  auto d =
+      unordered_map<string, int>{colors | view::transform([](const auto &e) {
+                                   return make_pair(e, e.size());
+                                 })};
+  CHECK((unordered_map<string, int>{
+            {"red", 3}, {"green", 5}, {"yellow", 6}, {"blue", 4}}) == d);
+  //! [014]
 }

@@ -11,6 +11,11 @@
 * [sorted(colors)](functional/007.md)
 * [sorted(colors, reverse=True)](functional/008.md)
 * [sorted(colors, key=lambda e: len(e))](functional/009.md)
+* [[len(color) for color in colors]](functional/010.md)
+* [any(color == 'green' for color in colors)](functional/011.md)
+* [colors[:-1]](functional/012.md)
+* [del d[k]](functional/013.md)
+* [dict((color, len(color)) for color in colors)](functional/014.md)
 
 ## string
 

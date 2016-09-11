@@ -63,3 +63,44 @@ class Test(unittest.TestCase):
         colors = ['red', 'green', 'blue', 'yellow']
         self.assertListEqual(['red', 'blue', 'green', 'yellow'], sorted(colors, key=lambda e: len(e)))
         #! [009]
+
+    def test_010(self):
+        #! [010]
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertListEqual([3, 5, 4, 6], [len(color) for color in colors])
+        #! [010]
+
+    def test_011(self):
+        #! [011]
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertTrue(any(color == 'green' for color in colors))
+        #! [011]
+
+    def test_012(self):
+        #! [012]
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertListEqual(['green'], colors[1:2])
+        self.assertListEqual(['red', 'green'], colors[:2])
+        self.assertListEqual(['green', 'blue', 'yellow'], colors[1:])
+        self.assertListEqual(['red', 'green', 'blue', 'yellow'], colors[:-1])
+        #! [012]
+
+    def test_013(self):
+        #! [013]
+        d = {'matthew': 'blue', 'rachel': 'green', 'raymond': 'red'}
+        for k in d.keys():
+            if k.startswith('r'):
+                del d[k]
+        self.assertListEqual(['matthew'], d.keys())
+        #! [013]
+
+    def test_014(self):
+        #! [014]
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertDictEqual({
+            'red': 3,
+            'green': 5,
+            'blue': 4,
+            'yellow': 6
+        }, dict((color, len(color)) for color in colors))
+        #! [014]
