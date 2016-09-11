@@ -1,3 +1,10 @@
 [import:"001"](main.py)
 
-[import:"001",lang_c_cpp](main.cpp)
+[import:"001"](main.cpp)
+
+{% raw %}
+<div class="book-body">
+<div class="page-inner">
+</div>
+</div>
+{% endraw %}
