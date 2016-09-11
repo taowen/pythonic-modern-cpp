@@ -38,3 +38,19 @@ TEST_CASE("003") {
           (colors | view::reverse | to_vector));
     //! [003]
 }
+
+TEST_CASE("004") {
+    //! [004]
+    auto names = vector<string>{"raymond", "rachel", "matthew"};
+    auto colors = vector<string>{"red", "green", "blue", "yellow"};
+    auto zipped = view::zip(names, colors);
+    CHECK((vector<pair<string, string>>{
+               {"raymond", "red"}, {"rachel", "green"}, {"matthew", "blue"}
+           })
+          ==
+          (zipped | to_vector));
+    for(const auto& [name, color] : zipped) {
+        cout << name << " " << color << endl;
+    }
+    //! [004]
+}

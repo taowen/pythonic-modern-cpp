@@ -20,3 +20,14 @@ class Test(unittest.TestCase):
         colors = ['red', 'green', 'blue', 'yellow']
         self.assertListEqual(['yellow', 'blue', 'green', 'red'], list(reversed(colors)))
         #! [003]
+
+    def test_004(self):
+        #! [004]
+        names = ['raymond', 'rachel', 'matthew']
+        colors = ['red', 'green', 'blue', 'yellow']
+        self.assertListEqual([
+            ('raymond', 'red'),
+            ('rachel', 'green'),
+            ('matthew', 'blue')
+        ], zip(names, colors))
+        #! [004]
