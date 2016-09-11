@@ -21,3 +21,5 @@
 
 * ['hello world'[4:7]](string/001.md)
 * [""" multi-line """](string/002.md)
+* [u'中文'](string/003.md)
+* [u'中文'.encode('utf8')](string/004.md)
