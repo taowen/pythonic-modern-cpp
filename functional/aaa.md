@@ -1,10 +1,7 @@
 [import:"001"](main.py)
 
-[import:"001"](main.cpp)
+[import:"001",lang-c++](main.cpp)
 
 {% raw %}
-<div class="book-body">
-<div class="page-inner">
-</div>
-</div>
+<div id="disqus_thread"/>
 {% endraw %}
