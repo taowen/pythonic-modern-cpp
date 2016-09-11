@@ -14,9 +14,9 @@ using json = nlohmann::json;
 
 
 TEST_CASE("aaa") {
-    /// [aaa]
+    /// [001]
     for(auto x : view::ints(0, 6)) {
         cout << x * x << endl;
     }
-    /// [aaa]
+    /// [001]
 }

@@ -1,3 +1,3 @@
 [import:"aaa"](main.py)
 
-[import:"aaa"](main.cpp)
+[import:"001"](main.cpp)
