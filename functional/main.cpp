@@ -13,10 +13,19 @@ using namespace ranges;
 using json = nlohmann::json;
 
 
-TEST_CASE("aaa") {
+TEST_CASE("001") {
     //! [001]
     for(auto x : view::ints(0, 6)) {
         cout << x * x << endl;
     }
     //! [001]
+}
+
+TEST_CASE("002") {
+    //! [002]
+    auto colors = vector<string>{"red", "green", "blue", "yellow"};
+    for(auto const& color : colors) {
+        cout << color << endl;
+    }
+    //! [002]
 }
