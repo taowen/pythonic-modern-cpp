@@ -6,12 +6,15 @@ module.exports = {
         "theme-faq",
         "-fontsettngs",
         "-sharing",
-        "include-codeblock"
+        "include-codeblock",
+        "disqus"
     ],
     "pluginsConfig": {
         "include-codeblock": {
-            // Before, create user-template.hbs
             "template": fs.readFileSync(__dirname + "/user-template.hbs", "utf-8")
+        },
+        "disqus": {
+            "shortName": "pythonic-modern-cpp"
         }
     }
 };
