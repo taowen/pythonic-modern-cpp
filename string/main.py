@@ -64,3 +64,8 @@ def""")
         #! [009]
         self.assertTrue('Hello World'.startswith('He'))
         #! [009]
+
+    def test_010(self):
+        #! [010]
+        self.assertTrue('Hello World'.endswith('ld'))
+        #! [010]

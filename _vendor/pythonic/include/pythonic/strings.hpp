@@ -14,21 +14,26 @@ namespace pythonic {
         }
         //! [split]
         //! [lower]
-        string lower(string_view input, locale const &l = std::locale()) {
+        auto lower(string_view input, locale const &l = std::locale()) {
           return input | view::transform([&l](auto c) { return std::tolower(c, l); }) |
                  to_<string>();
         }
         //! [lower]
         //! [upper]
-        string upper(string_view input, locale const &l = std::locale()) {
+        auto upper(string_view input, locale const &l = std::locale()) {
           return input | view::transform([&l](auto c) { return std::toupper(c, l); }) |
                  to_<string>();
         }
         //! [upper]
         //! [startswith]
-        bool startswith(string_view haystack, string_view needle) {
+        auto startswith(string_view haystack, string_view needle) {
           return ranges::equal(haystack | view::slice(size_t(0), needle.size()), needle);
         }
         //! [startswith]
+        //! [endswith]
+        auto endswith(string_view haystack, string_view needle) {
+          return ranges::equal(haystack | view::slice(ranges::end - needle.size(), ranges::end), needle);
+        }
+        //! [endswith]
     }
 }

@@ -28,3 +28,4 @@
 * ['{:.2f}'.format(3.1415)](string/007.md)
 * ['Hello World'.lower()](string/008.md)
 * ['Hello World'.startswith('He')](string/009.md)
+* ['Hello World'.endswith('ld')](string/010.md)

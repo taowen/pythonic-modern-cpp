@@ -105,3 +105,10 @@ TEST_CASE("009") {
   CHECK(!strings::startswith("Hello World", "Hello World!"));
   //! [009]
 }
+
+TEST_CASE("010") {
+  //! [010]
+  CHECK(strings::endswith("Hello World", "ld"));
+  CHECK(!strings::endswith("Hello World", "Hello World!"));
+  //! [010]
+}
