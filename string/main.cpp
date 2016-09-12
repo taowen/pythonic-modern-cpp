@@ -91,3 +91,10 @@ TEST_CASE("007") {
   CHECK("3.14" == ("{:.2f}"_format(3.14159)));
   //! [007]
 }
+
+TEST_CASE("008") {
+  //! [008]
+  CHECK("hello world" == (strings::lower("Hello World")));
+  CHECK("HELLO WORLD" == (strings::upper("Hello World")));
+  //! [008]
+}

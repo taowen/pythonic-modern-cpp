@@ -53,3 +53,9 @@ def""")
         # format
         self.assertEqual('3.14', '{:.2f}'.format(3.1415))
         #! [007]
+
+    def test_008(self):
+        #! [008]
+        self.assertEqual('hello world', 'Hello World'.lower())
+        self.assertEqual('HELLO WORLD', 'Hello World'.upper())
+        #! [008]
