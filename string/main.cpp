@@ -4,6 +4,7 @@
 #include <experimental/string_view>
 #include <fmt/all.hpp>
 #include <locale>
+#include <pythonic/strings.hpp>
 #include <range/v3/all.hpp>
 #include <regex>
 #include <string>
@@ -13,6 +14,7 @@ const int abc = std::__1::numeric_limits<int>::digits;
 
 using namespace std;
 using namespace ranges;
+using namespace pythonic;
 
 TEST_CASE("001") {
   //! [001]
@@ -44,4 +46,12 @@ TEST_CASE("004") {
       u16string_view(u"中文") | tcb::utf_ranges::view::utf8 | to_<string>();
   CHECK(string_view("中文") == str1);
   //! [004]
+}
+
+TEST_CASE("005") {
+  //! [005]
+  auto parts = strings::split("hello world", " ") | to_vector;
+  CHECK("hello" == parts[0]);
+  CHECK("world" == parts[1]);
+  //! [005]
 }

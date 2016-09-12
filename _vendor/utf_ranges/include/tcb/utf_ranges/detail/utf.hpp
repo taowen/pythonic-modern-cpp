@@ -12,6 +12,7 @@
 #define TCB_UTF_RANGES_DETAIL_UTF_HPP_INCLUDED
 
 #include <cstdint>
+#include <array>
 
 namespace tcb {
 namespace utf_ranges {

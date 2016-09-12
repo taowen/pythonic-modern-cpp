@@ -25,3 +25,8 @@ def""")
         #! [004]
         self.assertEqual('中文', u'中文'.encode('utf8'))
         #! [004]
+
+    def test_005(self):
+        #! [005]
+        self.assertListEqual(['hello', 'world'], 'hello world'.split(' '))
+        #! [005]
