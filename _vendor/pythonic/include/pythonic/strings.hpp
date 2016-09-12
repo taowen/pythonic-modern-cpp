@@ -35,5 +35,27 @@ namespace pythonic {
           return ranges::equal(haystack | view::slice(ranges::end - needle.size(), ranges::end), needle);
         }
         //! [endswith]
+        //! [lstrip]
+        auto lstrip(string_view input, locale const &l = std::locale()) {
+          auto begin = input.begin();
+          auto left_iterator = ranges::find_if(
+              begin, input.end(), [&l](auto const &c) { return !std::isspace(c, l); });
+          return input.substr(left_iterator - begin);
+        }
+        //! [lstrip]
+        //! [rstrip]
+        auto rstrip(string_view input, locale const &l = std::locale()) {
+          auto rend = input.rend();
+          auto right_iterator =
+              ranges::find_if(input.rbegin(), rend,
+                              [&l](auto const &c) { return !std::isspace(c, l); });
+          return input.substr(0, rend - right_iterator);
+        }
+        //! [rstrip]
+        //! [strip]
+        auto strip(string_view input, locale l = std::locale()) {
+          return rstrip(lstrip(input, l), l);
+        }
+        //! [strip]
     }
 }

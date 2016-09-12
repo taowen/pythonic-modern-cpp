@@ -69,3 +69,10 @@ def""")
         #! [010]
         self.assertTrue('Hello World'.endswith('ld'))
         #! [010]
+
+    def test_011(self):
+        #! [011]
+        self.assertEqual('hello world', ' hello world'.lstrip())
+        self.assertEqual('hello world', 'hello world '.rstrip())
+        self.assertEqual('hello world', '\thello world\t'.strip())
+        #! [011]

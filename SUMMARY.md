@@ -29,3 +29,4 @@
 * ['Hello World'.lower()](string/008.md)
 * ['Hello World'.startswith('He')](string/009.md)
 * ['Hello World'.endswith('ld')](string/010.md)
+* ['\thello world\t'.strip()](string/011.md)

@@ -10,7 +10,9 @@
 #include <string>
 #include <tcb/utf_ranges/view.hpp>
 
-const int abc = std::__1::numeric_limits<int>::digits;
+const auto a1 = std::__1::numeric_limits<int>::digits;
+const auto a2 =
+    std::__1::basic_string_view<char, std::__1::char_traits<char>>::npos;
 
 using namespace std;
 using namespace ranges;
@@ -111,4 +113,12 @@ TEST_CASE("010") {
   CHECK(strings::endswith("Hello World", "ld"));
   CHECK(!strings::endswith("Hello World", "Hello World!"));
   //! [010]
+}
+
+TEST_CASE("011") {
+  //! [011]
+  CHECK(string_view("hello world") == strings::lstrip(" hello world"));
+  CHECK(string_view("hello world") == strings::rstrip("hello world "));
+  CHECK(string_view("hello world") == strings::strip("\thello world\t"));
+  //! [011]
 }
