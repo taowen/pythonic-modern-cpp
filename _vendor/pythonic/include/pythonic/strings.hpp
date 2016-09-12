@@ -25,5 +25,10 @@ namespace pythonic {
                  to_<string>();
         }
         //! [upper]
+        //! [startswith]
+        bool startswith(string_view haystack, string_view needle) {
+          return ranges::equal(haystack | view::slice(size_t(0), needle.size()), needle);
+        }
+        //! [startswith]
     }
 }

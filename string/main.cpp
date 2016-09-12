@@ -98,3 +98,10 @@ TEST_CASE("008") {
   CHECK("HELLO WORLD" == (strings::upper("Hello World")));
   //! [008]
 }
+
+TEST_CASE("009") {
+  //! [009]
+  CHECK(strings::startswith("Hello World", "He"));
+  CHECK(!strings::startswith("Hello World", "Hello World!"));
+  //! [009]
+}

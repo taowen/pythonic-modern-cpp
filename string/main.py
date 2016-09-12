@@ -59,3 +59,8 @@ def""")
         self.assertEqual('hello world', 'Hello World'.lower())
         self.assertEqual('HELLO WORLD', 'Hello World'.upper())
         #! [008]
+
+    def test_009(self):
+        #! [009]
+        self.assertTrue('Hello World'.startswith('He'))
+        #! [009]
