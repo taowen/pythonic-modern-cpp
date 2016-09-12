@@ -30,3 +30,5 @@
 * ['Hello World'.startswith('He')](string/009.md)
 * ['Hello World'.endswith('ld')](string/010.md)
 * ['\thello world\t'.strip()](string/011.md)
+* ['hello'.find('l')](string/012.md)
+* ['hello'.replace('l', '_', 1)](string/013.md)

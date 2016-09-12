@@ -122,3 +122,21 @@ TEST_CASE("011") {
   CHECK(string_view("hello world") == strings::strip("\thello world\t"));
   //! [011]
 }
+
+TEST_CASE("012") {
+  //! [012]
+  auto str = string_view("hello");
+  CHECK(2 == str.find("l"));
+  CHECK(string::npos == str.find("!"));
+  CHECK(3 == str.rfind("l"));
+  //! [012]
+}
+
+TEST_CASE("013") {
+  //! [013]
+  auto str = string_view("hello");
+  CHECK("he__o" == strings::replace(str, "l", "_"));
+  CHECK("he_lo" == strings::replace(str, "l", "_", 1));
+  CHECK("he__o" == strings::replace(str, "l", "_", -1));
+  //! [013]
+}

@@ -76,3 +76,16 @@ def""")
         self.assertEqual('hello world', 'hello world '.rstrip())
         self.assertEqual('hello world', '\thello world\t'.strip())
         #! [011]
+
+    def test_012(self):
+        #! [012]
+        self.assertEqual(2, 'hello'.find('l'))
+        self.assertEqual(-1, 'hello'.find('!'))
+        self.assertEqual(3, 'hello'.rfind('l'))
+        #! [012]
+
+    def test_013(self):
+        #! [013]
+        self.assertEqual('he__o', 'hello'.replace('l', '_'))
+        self.assertEqual('he_lo', 'hello'.replace('l', '_', 1))
+        #! [013]

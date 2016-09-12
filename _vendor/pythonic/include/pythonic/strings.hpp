@@ -57,5 +57,27 @@ namespace pythonic {
           return rstrip(lstrip(input, l), l);
         }
         //! [strip]
+        //! [replace]
+        auto replace(string_view haystack, string_view needle, string_view replacement,
+                         size_t count = numeric_limits<size_t>::max()) {
+          auto needle_size = needle.size();
+          auto replaced = string();
+          replaced.reserve(haystack.size());
+          auto pos = 0;
+          while (count > 0) {
+            auto next = haystack.find(needle, pos);
+            if (next == string::npos) {
+              break;
+            } else {
+              replaced.append(haystack.substr(pos, next - pos));
+              replaced.append(replacement);
+              pos = next + needle_size;
+              count -= 1;
+            }
+          }
+          replaced.append(haystack.substr(pos));
+          return replaced;
+        }
+        //! [replace]
     }
 }
