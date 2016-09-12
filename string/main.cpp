@@ -78,3 +78,16 @@ TEST_CASE("006") {
   CHECK("hello world!" == mut_s);
   //! [006]
 }
+
+TEST_CASE("007") {
+  //! [007]
+  // positional
+  using namespace fmt::literals;
+  CHECK("hello world" == ("{} {}"_format("hello", "world")));
+  // named
+  CHECK("hello world" ==
+        ("{v1} {v2}"_format("v1"_a = "hello", "v2"_a = "world")));
+  // format
+  CHECK("3.14" == ("{:.2f}"_format(3.14159)));
+  //! [007]
+}

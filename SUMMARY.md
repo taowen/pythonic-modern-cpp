@@ -25,3 +25,4 @@
 * [u'中文'.encode('utf8')](string/004.md)
 * ['hello world'.split(' ')](string/005.md)
 * ['hello' + ' world'](string/006.md)
+* ['{:.2f}'.format(3.1415)](string/007.md)
