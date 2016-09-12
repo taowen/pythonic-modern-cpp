@@ -26,3 +26,5 @@
 * ['hello world'.split(' ')](string/005.md)
 * ['hello' + ' world'](string/006.md)
 * ['{:.2f}'.format(3.1415)](string/007.md)
+* ['Hello World'.lower()](string/008.md)
+* ['Hello World'.startswith('He')](string/009.md)
