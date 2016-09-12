@@ -23,3 +23,4 @@
 * [""" multi-line """](string/002.md)
 * [u'中文'](string/003.md)
 * [u'中文'.encode('utf8')](string/004.md)
+* ['hello world'.split(' ')](string/005.md)
