@@ -30,3 +30,16 @@ def""")
         #! [005]
         self.assertListEqual(['hello', 'world'], 'hello world'.split(' '))
         #! [005]
+
+    def test_006(self):
+        #! [006]
+        # small
+        self.assertEqual('hello world', 'hello' + ' world')
+        # large
+        parts = []
+        parts.append('h')
+        parts.append('e')
+        parts.append('ll')
+        parts.append('o')
+        self.assertEqual('hello', ''.join(parts))
+        #! [006]
