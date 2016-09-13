@@ -32,3 +32,4 @@
 * ['\thello world\t'.strip()](string/011.md)
 * ['hello'.find('l')](string/012.md)
 * ['hello'.replace('l', '_', 1)](string/013.md)
+* [re.search('(e\wl)O', 'HELLO', re.IGNORECASE)](string/014.md)

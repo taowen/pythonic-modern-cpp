@@ -1,5 +1,6 @@
 # coding=utf-8
 import unittest
+import re
 
 
 class Test(unittest.TestCase):
@@ -89,3 +90,12 @@ def""")
         self.assertEqual('he__o', 'hello'.replace('l', '_'))
         self.assertEqual('he_lo', 'hello'.replace('l', '_', 1))
         #! [013]
+
+    def test_014(self):
+        #! [014]
+        match = re.search('(e\wl)O', 'HELLO', re.IGNORECASE)
+        self.assertIsNotNone(match)
+        self.assertEqual('ELLO', match.group())
+        self.assertEqual('ELLO', match.group(0))
+        self.assertEqual('ELL', match.group(1))
+        #! [014]

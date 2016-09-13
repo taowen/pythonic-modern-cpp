@@ -4,6 +4,7 @@
 #include <experimental/string_view>
 #include <fmt/all.hpp>
 #include <locale>
+#include <pythonic/regexs.hpp>
 #include <pythonic/strings.hpp>
 #include <range/v3/all.hpp>
 #include <regex>
@@ -139,4 +140,15 @@ TEST_CASE("013") {
   CHECK("he_lo" == strings::replace(str, "l", "_", 1));
   CHECK("he__o" == strings::replace(str, "l", "_", -1));
   //! [013]
+}
+
+TEST_CASE("014") {
+  //! [014]
+  auto match =
+      regexs::search(R"!!((e\wl)O)!!", "HELLO", regex_constants::icase);
+  CHECK(!match.empty());
+  CHECK(string_view("ELLO") == match.group());
+  CHECK(string_view("ELLO") == match.group(0));
+  CHECK(string_view("ELL") == match.group(1));
+  //! [014]
 }

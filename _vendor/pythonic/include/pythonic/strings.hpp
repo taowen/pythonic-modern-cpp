@@ -1,4 +1,6 @@
 #include <range/v3/all.hpp>
+#include <experimental/string_view>
+#include <regex>
 
 using namespace ranges;
 using namespace std;
