@@ -33,3 +33,4 @@
 * ['hello'.find('l')](string/012.md)
 * ['hello'.replace('l', '_', 1)](string/013.md)
 * [re.search('(e\wl)O', 'HELLO', re.IGNORECASE)](string/014.md)
+* [re.sub('[l|h]+', lambda match: match.group().upper(), 'hello')](string/015.md)

@@ -99,3 +99,8 @@ def""")
         self.assertEqual('ELLO', match.group(0))
         self.assertEqual('ELL', match.group(1))
         #! [014]
+
+    def test_015(self):
+        #! [015]
+        self.assertEqual('HeLLo', re.sub('[l|h]+', lambda match: match.group().upper(), 'hello'))
+        #! [015]

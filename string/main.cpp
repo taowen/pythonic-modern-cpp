@@ -147,8 +147,18 @@ TEST_CASE("014") {
   auto match =
       regexs::search(R"!!((e\wl)O)!!", "HELLO", regex_constants::icase);
   CHECK(!match.empty());
-  CHECK(string_view("ELLO") == match.group());
-  CHECK(string_view("ELLO") == match.group(0));
-  CHECK(string_view("ELL") == match.group(1));
+  CHECK(string_view("ELLO") == regexs::get_group(match));
+  CHECK(string_view("ELLO") == regexs::get_group(match, 0));
+  CHECK(string_view("ELL") == regexs::get_group(match, 1));
   //! [014]
+}
+
+TEST_CASE("015") {
+  //! [015]
+  auto result = regexs::sub(
+      R"!!([h|l]+)!!",
+      [](cmatch const &m) { return strings::upper(regexs::get_group(m)); },
+      "hello");
+  CHECK("HeLLo" == result);
+  //! [015]
 }
