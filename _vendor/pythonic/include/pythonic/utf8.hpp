@@ -240,6 +240,7 @@ constexpr text_view operator"" _v(char const *self, size_t len) {
   return text_view(self, len);
 }
 }
+size_t len(text_view input) noexcept { return input.code_points_count(); }
 
 std::ostream &operator<<(std::ostream &os, text_view const &value) {
   os.write(value.begin(), long(value.code_units_count()));
@@ -267,68 +268,55 @@ bool operator!=(text_view const &left, text_view const &right) {
   return !(left == right);
 }
 
-vector<text_view> operator+(text_view const &left, text_view const &right) {
-  vector<text_view> views;
+class concated_text_views : public vector<text_view> {
+public:
+  using vector<text_view>::vector;
+
+  template <typename S> text_view to_str(S &out) {
+    auto len = size_t(0);
+    for (auto const &view : *this) {
+      len += view.code_units_count();
+    }
+    out.resize(len);
+    char *cur = const_cast<char *>(out.data());
+    for (auto const &view : *this) {
+      auto view_len = view.code_units_count();
+      strncpy(cur, view.begin(), view_len);
+      cur += view_len;
+    }
+    return out;
+  }
+
+  string to_str() {
+    auto out = string{};
+    to_str(out);
+    return out;
+  }
+};
+
+concated_text_views operator+(text_view const &left, text_view const &right) {
+  auto views = concated_text_views{};
   views.push_back(left);
   views.push_back(right);
   return views;
 }
 
-vector<text_view> operator+(vector<text_view> views,
-                            text_view const &one_view) {
+concated_text_views operator+(concated_text_views views,
+                              text_view const &one_view) {
   views.push_back(one_view);
   return views;
 }
 
-vector<text_view> operator+(text_view const &one_view,
-                            vector<text_view> views) {
+concated_text_views operator+(text_view const &one_view,
+                              concated_text_views views) {
   views.insert(views.begin(), one_view);
   return views;
 }
 
-vector<text_view> operator+(vector<text_view> left,
-                            vector<text_view> const &right) {
+concated_text_views operator+(concated_text_views left,
+                              concated_text_views const &right) {
   left.insert(left.end(), right.begin(), right.end());
   return left;
-}
-
-template <typename F> auto operator|(vector<text_view> const &self, F f) {
-  return f(self);
-}
-
-template <typename F> auto operator|(text_view const &self, F f) {
-  return f(self);
-}
-
-size_t len(text_view input) noexcept { return input.code_points_count(); }
-
-template <typename S> text_view to_str(vector<text_view> const &views, S &out) {
-  auto len = 0;
-  for (auto const &view : views) {
-    len += view.code_units_count();
-  }
-  out.resize(len);
-  char *cur = const_cast<char *>(out.data());
-  for (auto const &view : views) {
-    auto view_len = view.code_units_count();
-    strncpy(cur, view.begin(), view_len);
-    cur += view_len;
-  }
-  return out;
-}
-
-template <typename S> inline auto to_str(S &out) {
-  return [&out](auto &self) { return to_str(self, out); };
-}
-
-string to_str(vector<text_view> const &views) {
-  auto out = string{};
-  to_str(views, out);
-  return out;
-}
-
-inline auto to_str() {
-  return [](auto &self) { return to_str(self); };
 }
 
 //! [split]

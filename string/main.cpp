@@ -116,17 +116,16 @@ TEST_CASE("004") {
   auto str1 = u8"hello"_v;
   auto str2 = u8" world"_v;
   auto out = string{};
-  CHECK(u8"hello world" == ((str1 + str2) | utf8::to_str(out)));
+  CHECK(u8"hello world" == ((str1 + str2).to_str(out)));
 
   // concat many
   auto str3 = u8"!"_v;
-  CHECK(u8"hello world!" == ((str1 + str2 + str3) | utf8::to_str(out)));
-  CHECK(u8"hello world!" == ((str1 + (str2 + str3)) | utf8::to_str(out)));
-  CHECK(u8"hello! world!" ==
-        (((str1 + str3) + (str2 + str3)) | utf8::to_str(out)));
+  CHECK(u8"hello world!" == ((str1 + str2 + str3).to_str(out)));
+  CHECK(u8"hello world!" == ((str1 + (str2 + str3)).to_str(out)));
+  CHECK(u8"hello! world!" == (((str1 + str3) + (str2 + str3)).to_str(out)));
 
   // allocate string intenrally
-  CHECK(u8"hello world" == ((str1 + str2) | utf8::to_str()));
+  CHECK(u8"hello world" == ((str1 + str2).to_str()));
   //! [004]
 }
 
