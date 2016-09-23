@@ -16,7 +16,7 @@ _book
 *.pdf
 *.iml
 
-/.idea
 /_vendor/_update
 /*/build
 CMakeLists.txt.user
+.idea

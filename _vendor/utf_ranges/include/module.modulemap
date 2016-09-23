@@ -1,4 +1,0 @@
-module utf_ranges {
-    umbrella "."
-    export *
-}
