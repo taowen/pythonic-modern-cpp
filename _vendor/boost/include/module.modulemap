@@ -1,0 +1,4 @@
+module boost {
+    export *
+    textual header "boost/smart_ptr/detail/operator_bool.hpp"
+}

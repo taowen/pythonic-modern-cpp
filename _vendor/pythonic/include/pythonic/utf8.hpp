@@ -1,8 +1,11 @@
+#pragma once
+
 #include "range/v3/all.hpp"
 #include <iostream>
 
 using namespace std;
 namespace rng_detail = ranges::detail;
+
 namespace pythonic {
 namespace utf8 {
 
@@ -230,6 +233,36 @@ public:
     return parts;
   }
 
+  template <typename S>
+  text_view replace(text_view needle, text_view replacement, size_t count,
+                    S &out) const {
+    auto needle_len = needle.code_units_count();
+    if (needle_len == 0) {
+      out.append(__data, __size);
+      return out;
+    }
+    auto last = begin();
+    for (auto cur = begin(); cur != end() - needle_len && count > 0;) {
+      if (text_view(cur, needle_len) == needle) {
+        count--;
+        out.append(last, cur - last);
+        out.append(replacement.__data, replacement.__size);
+        cur += needle_len;
+        last = cur;
+      } else {
+        cur++;
+      }
+    }
+    out.append(last, end() - last);
+    return out;
+  }
+
+  string replace(text_view needle, text_view replacement, size_t count = -1) {
+    auto out = string{};
+    replace(needle, replacement, count, out);
+    return out;
+  }
+
 private:
   char const *__data;
   size_t __size;
@@ -318,112 +351,5 @@ concated_text_views operator+(concated_text_views left,
   left.insert(left.end(), right.begin(), right.end());
   return left;
 }
-
-//! [split]
-
-//! [split]
-// auto split(u16string_view input, u16string_view delimeter) {
-//  auto to_string_view = [](auto const &r) {
-//    return u16string_view(&*r.begin(), ranges::distance(r));
-//  };
-//  return view::split(input, delimeter) | view::transform(to_string_view);
-//}
-////! [split]
-////! [lower]
-// auto lower(u16string_view input, locale const &l = std::locale()) {
-//  return input | view::transform([&l](auto c) {
-//           if (u'a' <= c <= u'Z') {
-//             return static_cast<char16_t>(
-//                 std::tolower(static_cast<char>(c), l));
-//           } else {
-//             return c;
-//           }
-//         }) |
-//         to_<u16string>();
-//}
-////! [lower]
-////! [upper]
-// auto upper(u16string_view input, locale const &l = std::locale()) {
-//  return input | view::transform([&l](auto c) {
-//           if (u'a' <= c <= u'Z') {
-//             return static_cast<char16_t>(
-//                 std::toupper(static_cast<char>(c), l));
-//           } else {
-//             return c;
-//           }
-//         }) |
-//         to_<u16string>();
-//}
-////! [upper]
-////! [startswith]
-// auto startswith(u16string_view haystack, u16string_view needle) {
-//  return ranges::equal(haystack | view::slice(size_t(0), needle.size()),
-//                       needle);
-//}
-////! [startswith]
-////! [endswith]
-// auto endswith(u16string_view haystack, u16string_view needle) {
-//  return ranges::equal(
-//      haystack | view::slice(ranges::end - needle.size(), ranges::end),
-//      needle);
-//}
-////! [endswith]
-////! [lstrip]
-// auto lstrip(u16string_view input, locale const &l = std::locale()) {
-//  auto begin = input.begin();
-//  auto left_iterator = ranges::find_if(begin, input.end(), [&l](auto const
-//  &c)
-//  {
-//    if (u'a' <= c <= u'Z') {
-//      return !std::isspace(static_cast<char>(c), l);
-//    } else {
-//      return false;
-//    }
-//  });
-//  return input.substr(left_iterator - begin);
-//}
-////! [lstrip]
-////! [rstrip]
-// auto rstrip(u16string_view input, locale const &l = std::locale()) {
-//  auto rend = input.rend();
-//  auto right_iterator =
-//      ranges::find_if(input.rbegin(), rend, [&l](auto const &c) {
-//        if (u'a' <= c <= u'Z') {
-//          return !std::isspace(static_cast<char>(c), l);
-//        } else {
-//          return false;
-//        }
-//      });
-//  return input.substr(0, rend - right_iterator);
-//}
-////! [rstrip]
-////! [strip]
-// auto strip(u16string_view input, locale l = std::locale()) {
-//  return rstrip(lstrip(input, l), l);
-//}
-////! [strip]
-////! [replace]
-// auto replace(u16string_view haystack, u16string_view needle,
-//             u16string_view replacement,
-//             size_t count = numeric_limits<size_t>::max()) {
-//  auto needle_size = needle.size();
-//  auto replaced = u16string();
-//  replaced.reserve(haystack.size());
-//  auto pos = 0;
-//  while (count > 0) {
-//    auto next = haystack.find(needle, pos);
-//    if (next == string::npos) {
-//      break;
-//    } else {
-//      replaced.append(haystack.substr(pos, next - pos));
-//      replaced.append(replacement);
-//      pos = next + needle_size;
-//      count -= 1;
-//    }
-//  }
-//  replaced.append(haystack.substr(pos));
-//  return replaced;
-//}
-////! [replace]
 }
 }

@@ -1,6 +1,8 @@
 #include "catch_ext.hpp"
 #include "catch_with_main.hpp"
 #include "fmt/all.hpp"
+#include "folly/Expected.h"
+#include "pythonic/regexs.hpp"
 #include "pythonic/utf8.hpp"
 #include <codecvt>
 #include <iostream>
@@ -182,14 +184,27 @@ TEST_CASE("010") {
   //! [010]
 }
 
-// TEST_CASE("013") {
-//  //! [013]
-//  auto str = u16string_view(u"hello");
-//  CHECK(u"he__o" == strings::replace(str, u"l", u"_"));
-//  CHECK(u"he_lo" == strings::replace(str, u"l", u"_", 1));
-//  CHECK(u"he__o" == strings::replace(str, u"l", u"_", -1));
-//  //! [013]
-//}
+TEST_CASE("011") {
+  //! [011]
+  CHECK(u8"he__o" == u8"hello"_v.replace(u8"l", u8"_"));
+  CHECK(u8"he_lo" == u8"hello"_v.replace(u8"l", u8"_", 1));
+  CHECK(u8"he__o" == u8"hello"_v.replace(u8"l", u8"_", -1));
+  //! [011]
+}
+
+TEST_CASE("012") {
+  // . will match utf8 codepoint
+  CHECK(u8"字符" == re::search(u8"字.", u8"中文字符").value().group());
+  // \w will not match utf8 codepoint by default
+  CHECK(u8"字符" != re::search(u8"字\\w", u8"中文字符").value().group());
+  // use UCP to enable \w matching codepoint, will slowdown the search
+  CHECK(u8"字符" ==
+        re::search(u8"字\\w", u8"中文字符", PCRE2_UCP).value().group());
+  // not mached is not a error, but match will is_matched = false
+  CHECK(!re::search(u8"abc", u8"中文字符").value().is_matched);
+  // invlaid regex pattern
+  CHECK(re::search(u8"\\", u8"中文字符").hasError());
+}
 
 // TEST_CASE("014") {
 //  //! [014]
