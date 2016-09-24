@@ -62,6 +62,13 @@ TEST_CASE("001") {
   CHECK(12 == (str3.code_units_count()));
   CHECK(4 == (str3.code_points_count()));
   CHECK(u8"文字" == (str3[{1, 3}]));
+
+  // utf8::TextView is iterable as char32_t
+  auto count = 0;
+  for (char32_t c : str3) {
+    count += 1;
+  }
+  CHECK(4 == count);
   //! [001]
 }
 
@@ -75,32 +82,32 @@ def)!!"_v;
 
 TEST_CASE("split empty with empty") {
   auto parts = u8""_v.split(u8"");
-  CHECK(vector<utf8::text_view>{u8""} == parts);
+  CHECK(vector<utf8::TextView>{u8""} == parts);
 }
 
 TEST_CASE("split none empty with empty") {
   auto parts = u8"hello"_v.split(u8"");
-  CHECK(vector<utf8::text_view>{u8"hello"} == parts);
+  CHECK(vector<utf8::TextView>{u8"hello"} == parts);
 }
 
 TEST_CASE("split with match in begin") {
   auto parts = u8"hello"_v.split(u8"h");
-  CHECK((vector<utf8::text_view>{u8"", u8"ello"}) == parts);
+  CHECK((vector<utf8::TextView>{u8"", u8"ello"}) == parts);
 }
 
 TEST_CASE("split with match in end") {
   auto parts = u8"hello"_v.split(u8"o");
-  CHECK((vector<utf8::text_view>{u8"hell", u8""}) == parts);
+  CHECK((vector<utf8::TextView>{u8"hell", u8""}) == parts);
 }
 
 TEST_CASE("split with multiple code units") {
   auto parts = u8"hello"_v.split(u8"ll");
-  CHECK((vector<utf8::text_view>{u8"he", u8"o"}) == parts);
+  CHECK((vector<utf8::TextView>{u8"he", u8"o"}) == parts);
 }
 
 TEST_CASE("split with multiple code units not found") {
   auto parts = u8"hello"_v.split(u8"lli");
-  CHECK((vector<utf8::text_view>{u8"hello"}) == parts);
+  CHECK((vector<utf8::TextView>{u8"hello"}) == parts);
 }
 
 TEST_CASE("003") {
@@ -195,15 +202,20 @@ TEST_CASE("011") {
 TEST_CASE("012") {
   // . will match utf8 codepoint
   CHECK(u8"字符" == re::search(u8"字.", u8"中文字符").value().group());
-  // \w will not match utf8 codepoint by default
-  CHECK(u8"字符" != re::search(u8"字\\w", u8"中文字符").value().group());
   // use UCP to enable \w matching codepoint, will slowdown the search
   CHECK(u8"字符" ==
         re::search(u8"字\\w", u8"中文字符", PCRE2_UCP).value().group());
-  // not mached is not a error, but match will is_matched = false
-  CHECK(!re::search(u8"abc", u8"中文字符").value().is_matched);
+  // not matched
+  CHECK(!bool(re::search(u8"abc", u8"中文字符")));
   // invlaid regex pattern
-  CHECK(re::search(u8"\\", u8"中文字符").hasError());
+  CHECK(!bool(re::search(u8"\\", u8"中文字符")));
+}
+
+TEST_CASE("013") {
+  CHECK(u8"中文" == re::search(u8"(.)(.)", u8"中文字符").value().group());
+  CHECK(u8"中" == re::search(u8"(.)(.)", u8"中文字符").value().group(1));
+  CHECK(u8"文" == re::search(u8"(.)(.)", u8"中文字符").value().group(2));
+  CHECK(u8"" == re::search(u8"(.)(.)", u8"中文字符").value().group(3));
 }
 
 // TEST_CASE("014") {

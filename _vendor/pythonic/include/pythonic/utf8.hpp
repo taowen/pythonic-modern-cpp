@@ -43,24 +43,84 @@ inline size_t decode_utf8(const char *src, size_t n) noexcept {
   }
 }
 
-class text_view;
-bool operator==(text_view const &left, text_view const &right);
+class TextView;
+bool operator==(TextView const &left, TextView const &right);
 
-class text_view {
+template <typename TextView> class TextViewIterator {
 public:
-  constexpr text_view() noexcept : __data(nullptr), __size(0) {}
-  text_view(char const *data) noexcept : __data(data), __size(strlen(data)) {}
-  constexpr text_view(string const &str) noexcept
+  TextViewIterator(TextView text_view)
+      : __data(text_view.c_str()), __size(text_view.code_units_count()),
+        __next_step(0), __current_code_point(0) {
+    advance();
+  }
+  TextViewIterator(TextView text_view, size_t current_pos)
+      : __data(text_view.c_str() + current_pos), __size(0), __next_step(0),
+        __current_code_point(0) {}
+
+  char32_t operator*() { return __current_code_point; }
+
+  TextViewIterator<TextView> &operator++() {
+    advance();
+    return *this;
+  }
+
+  TextViewIterator<TextView> operator++(int) {
+    TextViewIterator<TextView> tmp(*this);
+    operator++();
+    return tmp;
+  }
+
+  bool operator==(TextViewIterator<TextView> const &right) {
+    return __data == right.__data && __size == right.__size;
+  }
+
+  bool operator!=(TextViewIterator<TextView> const &right) {
+    return !(*this == right);
+  }
+
+  char const *current() { return __data; }
+
+private:
+  void advance() {
+    if (__size > 0) {
+      __data += __next_step;
+      __size -= __next_step;
+      __next_step = decode_utf8(__data, __size, __current_code_point);
+    }
+  }
+  char const *__data;
+  size_t __size;
+  char32_t __current_code_point;
+  size_t __next_step;
+};
+
+class TextView {
+public:
+  constexpr TextView() noexcept : __data(nullptr), __size(0) {}
+  TextView(char const *data) noexcept : __data(data), __size(strlen(data)) {}
+  constexpr TextView(string const &str) noexcept
       : __data(str.c_str()), __size(str.size()) {}
-  constexpr text_view(char const *data, size_t size) noexcept
+  constexpr TextView(char const *data, size_t size) noexcept
       : __data(data), __size(size) {}
   constexpr size_t code_units_count() const noexcept { return __size; }
-  constexpr char const *begin() const noexcept { return __data; }
-  constexpr char const *end() const noexcept { return __data + __size; }
+  constexpr char const *c_str() const noexcept { return __data; }
+  constexpr char const *code_units_begin() const noexcept { return __data; }
+  constexpr char const *code_units_end() const noexcept {
+    return __data + __size;
+  }
+
+  TextViewIterator<TextView> begin() {
+    return TextViewIterator<TextView>(*this);
+  }
+
+  TextViewIterator<TextView> end() {
+    return TextViewIterator<TextView>(*this, code_units_count());
+  }
+
   size_t code_points_count() const noexcept {
-    auto end_iter = end();
+    auto end_iter = code_units_end();
     auto length = size_t(0);
-    for (auto cur_iter = begin(); cur_iter != end_iter;) {
+    for (auto cur_iter = code_units_begin(); cur_iter != end_iter;) {
       auto adv = decode_utf8(cur_iter, size_t(end_iter - cur_iter));
       cur_iter += adv;
       length++;
@@ -68,40 +128,40 @@ public:
     return length;
   }
 
-  text_view
+  TextView
   operator[](rng_detail::slice_bounds<size_t, ranges::end_fn> offs) const
       noexcept {
     return (*this)[{offs.from, code_points_count()}];
   }
 
-  text_view operator[](
+  TextView operator[](
       rng_detail::slice_bounds<size_t, rng_detail::from_end_<long>> offs) const
       noexcept {
     return (*this)[{offs.from, long(code_points_count()) + offs.to.dist_}];
   }
 
-  text_view operator[](
+  TextView operator[](
       rng_detail::slice_bounds<rng_detail::from_end_<long>, ranges::end_fn>
           offs) const noexcept {
     return (*this)[{long(code_points_count()) + offs.from.dist_,
                     code_points_count()}];
   }
 
-  text_view
+  TextView
   operator[](rng_detail::slice_bounds<rng_detail::from_end_<long>> offs) const
       noexcept {
     return (*this)[{long(code_points_count()) + offs.from.dist_,
                     long(code_points_count()) + offs.to.dist_}];
   }
 
-  text_view operator[](rng_detail::slice_bounds<long> offs) const noexcept {
-    auto cur = this->begin();
-    auto end = this->end();
-    decltype(this->begin()) sub_begin = nullptr;
+  TextView operator[](rng_detail::slice_bounds<long> offs) const noexcept {
+    auto cur = this->code_units_begin();
+    auto end = this->code_units_end();
+    decltype(this->code_units_begin()) sub_begin = nullptr;
     auto sub_end = end;
     auto visited = 0;
     if (offs.to <= offs.from) {
-      return text_view();
+      return TextView();
     }
     while (cur != end) {
       if (visited == offs.from) {
@@ -116,75 +176,80 @@ public:
       visited++;
     }
     if (sub_begin == nullptr) {
-      return text_view();
+      return TextView();
     }
-    return text_view(sub_begin, size_t(sub_end - sub_begin));
+    return TextView(sub_begin, size_t(sub_end - sub_begin));
   }
 
-  size_t find(text_view needle) {
+  size_t find(TextView needle) {
     auto needle_len = needle.code_units_count();
     if (needle_len == 0) {
       return npos;
     }
-    for (auto cur = begin(); cur < end() - needle_len; cur++) {
-      if (text_view(cur, needle_len) == needle) {
-        return size_t(cur - begin());
+    for (auto cur = code_units_begin(); cur < code_units_end() - needle_len;
+         cur++) {
+      if (TextView(cur, needle_len) == needle) {
+        return size_t(cur - code_units_begin());
       }
     }
     return npos;
   }
 
-  size_t rfind(text_view needle) const {
+  size_t rfind(TextView needle) const {
     auto needle_len = needle.code_units_count();
     if (needle_len == 0) {
       return npos;
     }
-    for (auto cur = end() - needle_len - 1; cur != begin() - 1; cur--) {
-      if (text_view(cur, needle_len) == needle) {
-        return size_t(cur - begin());
+    for (auto cur = code_units_end() - needle_len - 1;
+         cur != code_units_begin() - 1; cur--) {
+      if (TextView(cur, needle_len) == needle) {
+        return size_t(cur - code_units_begin());
       }
     }
     return npos;
   }
 
-  text_view lstrip() const noexcept {
-    for (auto cur = begin(); cur != end(); cur++) {
+  TextView lstrip() const noexcept {
+    for (auto cur = code_units_begin(); cur != code_units_end(); cur++) {
       if (!std::isspace(*cur)) {
-        return text_view(cur, size_t(end() - cur));
+        return TextView(cur, size_t(code_units_end() - cur));
       }
     }
-    return text_view();
+    return TextView();
   }
 
-  text_view rstrip() const noexcept {
-    for (auto cur = end() - 1; cur != begin() - 1; cur--) {
+  TextView rstrip() const noexcept {
+    for (auto cur = code_units_end() - 1; cur != code_units_begin() - 1;
+         cur--) {
       if (!std::isspace(*cur)) {
-        return text_view(begin(), size_t(cur - begin() + 1));
+        return TextView(code_units_begin(),
+                        size_t(cur - code_units_begin() + 1));
       }
     }
-    return text_view();
+    return TextView();
   }
 
-  text_view strip() const noexcept { return lstrip().rstrip(); }
+  TextView strip() const noexcept { return lstrip().rstrip(); }
 
-  bool startswith(text_view right) const noexcept {
+  bool startswith(TextView right) const noexcept {
     if (right.code_units_count() > code_units_count()) {
       return false;
     }
-    return text_view(begin(), right.code_units_count()) == right;
+    return TextView(code_units_begin(), right.code_units_count()) == right;
   }
 
-  bool endswith(text_view right) const noexcept {
+  bool endswith(TextView right) const noexcept {
     if (right.code_units_count() > code_units_count()) {
       return false;
     }
-    return text_view(end() - right.code_units_count(),
-                     right.code_units_count()) == right;
+    return TextView(code_units_end() - right.code_units_count(),
+                    right.code_units_count()) == right;
   }
 
-  template <typename S> text_view lower(S &out) const {
-    for (auto c : *this) {
-      out.push_back(char(std::tolower(c)));
+  template <typename S> TextView lower(S &out) const {
+    out.reserve(code_units_count());
+    for (auto cur = code_units_begin(); cur != code_units_end(); cur++) {
+      out.push_back(char(std::tolower(*cur)));
     }
     return out;
   }
@@ -195,9 +260,10 @@ public:
     return out;
   }
 
-  template <typename S> text_view upper(S &out) const {
-    for (auto c : *this) {
-      out.push_back(char(std::toupper(c)));
+  template <typename S> TextView upper(S &out) const {
+    out.reserve(code_units_count());
+    for (auto cur = code_units_begin(); cur < code_units_end(); cur++) {
+      out.push_back(char(std::toupper(*cur)));
     }
     return out;
   }
@@ -208,42 +274,43 @@ public:
     return out;
   }
 
-  template <typename V> auto split(text_view needle, V &parts) const {
+  template <typename V> auto split(TextView needle, V &parts) const {
     auto needle_len = needle.code_units_count();
-    auto cur = begin();
-    auto last = begin();
+    auto cur = code_units_begin();
+    auto last = code_units_begin();
     if (needle_len == 0) {
       parts.push_back(*this);
       return parts;
     }
-    for (; cur <= end() - needle_len; cur++) {
-      if (text_view(cur, needle_len) == needle) {
+    for (; cur <= code_units_end() - needle_len; cur++) {
+      if (TextView(cur, needle_len) == needle) {
         parts.emplace_back(last, cur - last);
         cur += needle_len;
         last = cur;
       }
     }
-    parts.emplace_back(last, end() - last);
+    parts.emplace_back(last, code_units_end() - last);
     return parts;
   }
 
-  vector<text_view> split(text_view needle) const {
-    auto parts = vector<text_view>{};
+  vector<TextView> split(TextView needle) const {
+    auto parts = vector<TextView>{};
     split(needle, parts);
     return parts;
   }
 
   template <typename S>
-  text_view replace(text_view needle, text_view replacement, size_t count,
-                    S &out) const {
+  TextView replace(TextView needle, TextView replacement, size_t count,
+                   S &out) const {
     auto needle_len = needle.code_units_count();
     if (needle_len == 0) {
       out.append(__data, __size);
       return out;
     }
-    auto last = begin();
-    for (auto cur = begin(); cur != end() - needle_len && count > 0;) {
-      if (text_view(cur, needle_len) == needle) {
+    auto last = code_units_begin();
+    for (auto cur = code_units_begin();
+         cur != code_units_end() - needle_len && count > 0;) {
+      if (TextView(cur, needle_len) == needle) {
         count--;
         out.append(last, cur - last);
         out.append(replacement.__data, replacement.__size);
@@ -253,11 +320,11 @@ public:
         cur++;
       }
     }
-    out.append(last, end() - last);
+    out.append(last, code_units_end() - last);
     return out;
   }
 
-  string replace(text_view needle, text_view replacement, size_t count = -1) {
+  string replace(TextView needle, TextView replacement, size_t count = -1) {
     auto out = string{};
     replace(needle, replacement, count, out);
     return out;
@@ -269,23 +336,23 @@ private:
 };
 
 namespace literals {
-constexpr text_view operator"" _v(char const *self, size_t len) {
-  return text_view(self, len);
+constexpr TextView operator"" _v(char const *self, size_t len) {
+  return TextView(self, len);
 }
 }
-size_t len(text_view input) noexcept { return input.code_points_count(); }
+size_t len(TextView input) noexcept { return input.code_points_count(); }
 
-std::ostream &operator<<(std::ostream &os, text_view const &value) {
-  os.write(value.begin(), long(value.code_units_count()));
+std::ostream &operator<<(std::ostream &os, TextView const &value) {
+  os.write(value.code_units_begin(), long(value.code_units_count()));
   return os;
 }
 
-bool operator==(text_view const &left, text_view const &right) {
+bool operator==(TextView const &left, TextView const &right) {
   if (left.code_units_count() != right.code_units_count()) {
     return false;
   }
-  auto left_cur = left.begin();
-  auto right_cur = right.begin();
+  auto left_cur = left.code_units_begin();
+  auto right_cur = right.code_units_begin();
   auto remaining = left.code_units_count();
   while (remaining-- > 0) {
     if (*left_cur != *right_cur) {
@@ -297,15 +364,15 @@ bool operator==(text_view const &left, text_view const &right) {
   return true;
 }
 
-bool operator!=(text_view const &left, text_view const &right) {
+bool operator!=(TextView const &left, TextView const &right) {
   return !(left == right);
 }
 
-class concated_text_views : public vector<text_view> {
+class ConcatedTextViews : public vector<TextView> {
 public:
-  using vector<text_view>::vector;
+  using vector<TextView>::vector;
 
-  template <typename S> text_view to_str(S &out) {
+  template <typename S> TextView to_str(S &out) {
     auto len = size_t(0);
     for (auto const &view : *this) {
       len += view.code_units_count();
@@ -314,7 +381,7 @@ public:
     char *cur = const_cast<char *>(out.data());
     for (auto const &view : *this) {
       auto view_len = view.code_units_count();
-      strncpy(cur, view.begin(), view_len);
+      strncpy(cur, view.c_str(), view_len);
       cur += view_len;
     }
     return out;
@@ -327,27 +394,25 @@ public:
   }
 };
 
-concated_text_views operator+(text_view const &left, text_view const &right) {
-  auto views = concated_text_views{};
+ConcatedTextViews operator+(TextView const &left, TextView const &right) {
+  auto views = ConcatedTextViews{};
   views.push_back(left);
   views.push_back(right);
   return views;
 }
 
-concated_text_views operator+(concated_text_views views,
-                              text_view const &one_view) {
+ConcatedTextViews operator+(ConcatedTextViews views, TextView const &one_view) {
   views.push_back(one_view);
   return views;
 }
 
-concated_text_views operator+(text_view const &one_view,
-                              concated_text_views views) {
+ConcatedTextViews operator+(TextView const &one_view, ConcatedTextViews views) {
   views.insert(views.begin(), one_view);
   return views;
 }
 
-concated_text_views operator+(concated_text_views left,
-                              concated_text_views const &right) {
+ConcatedTextViews operator+(ConcatedTextViews left,
+                            ConcatedTextViews const &right) {
   left.insert(left.end(), right.begin(), right.end());
   return left;
 }
