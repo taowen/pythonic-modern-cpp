@@ -982,13 +982,7 @@ public:
     if (newCap >= oldCap) return;
 
     void* p = impl_.b_;
-    // xallocx() will shrink to precisely newCapacityBytes (which was generated
-    // by goodMallocSize()) if it successfully shrinks in place.
-    if ((usingJEMalloc() && usingStdAllocator::value) &&
-        newCapacityBytes >= folly::jemallocMinInPlaceExpandable &&
-        xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
-      impl_.z_ += newCap - oldCap;
-    } else {
+
       T* newB; // intentionally uninitialized
       try {
         newB = M_allocate(newCap);
@@ -1006,24 +1000,12 @@ public:
       impl_.z_ = newB + newCap;
       impl_.e_ = newB + (impl_.e_ - impl_.b_);
       impl_.b_ = newB;
-    }
+
   }
 
 private:
 
   bool reserve_in_place(size_type n) {
-    if (!usingStdAllocator::value || !usingJEMalloc()) return false;
-
-    // jemalloc can never grow in place blocks smaller than 4096 bytes.
-    if ((impl_.z_ - impl_.b_) * sizeof(T) <
-      folly::jemallocMinInPlaceExpandable) return false;
-
-    auto const newCapacityBytes = folly::goodMallocSize(n * sizeof(T));
-    void* p = impl_.b_;
-    if (xallocx(p, newCapacityBytes, 0, 0) == newCapacityBytes) {
-      impl_.z_ = impl_.b_ + newCapacityBytes / sizeof(T);
-      return true;
-    }
     return false;
   }
 
@@ -1534,33 +1516,6 @@ template <class... Args>
 void fbvector<T, Allocator>::emplace_back_aux(Args&&... args) {
   size_type byte_sz = folly::goodMallocSize(
     computePushBackCapacity() * sizeof(T));
-  if (usingStdAllocator::value
-      && usingJEMalloc()
-      && ((impl_.z_ - impl_.b_) * sizeof(T) >=
-          folly::jemallocMinInPlaceExpandable)) {
-    // Try to reserve in place.
-    // Ask xallocx to allocate in place at least size()+1 and at most sz space.
-    // xallocx will allocate as much as possible within that range, which
-    //  is the best possible outcome: if sz space is available, take it all,
-    //  otherwise take as much as possible. If nothing is available, then fail.
-    // In this fashion, we never relocate if there is a possibility of
-    //  expanding in place, and we never reallocate by less than the desired
-    //  amount unless we cannot expand further. Hence we will not reallocate
-    //  sub-optimally twice in a row (modulo the blocking memory being freed).
-    size_type lower = folly::goodMallocSize(sizeof(T) + size() * sizeof(T));
-    size_type upper = byte_sz;
-    size_type extra = upper - lower;
-
-    void* p = impl_.b_;
-    size_t actual;
-
-    if ((actual = xallocx(p, lower, extra, 0)) >= lower) {
-      impl_.z_ = impl_.b_ + actual / sizeof(T);
-      M_construct(impl_.e_, std::forward<Args>(args)...);
-      ++impl_.e_;
-      return;
-    }
-  }
 
   // Reallocation failed. Perform a manual relocation.
   size_type sz = byte_sz / sizeof(T);

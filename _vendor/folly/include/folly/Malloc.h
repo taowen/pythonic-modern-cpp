@@ -132,54 +132,7 @@ namespace folly {
  * Determine if we are using jemalloc or not.
  */
 inline bool usingJEMalloc() noexcept {
-  // Checking for rallocx != NULL is not sufficient; we may be in a dlopen()ed
-  // module that depends on libjemalloc, so rallocx is resolved, but the main
-  // program might be using a different memory allocator.
-  // How do we determine that we're using jemalloc? In the hackiest
-  // way possible. We allocate memory using malloc() and see if the
-  // per-thread counter of allocated memory increases. This makes me
-  // feel dirty inside. Also note that this requires jemalloc to have
-  // been compiled with --enable-stats.
-  static const bool result = [] () FOLLY_MALLOC_NOINLINE noexcept {
-    // Some platforms (*cough* OSX *cough*) require weak symbol checks to be
-    // in the form if (mallctl != nullptr). Not if (mallctl) or if (!mallctl)
-    // (!!). http://goo.gl/xpmctm
-    if (mallocx == nullptr || rallocx == nullptr || xallocx == nullptr
-        || sallocx == nullptr || dallocx == nullptr || sdallocx == nullptr
-        || nallocx == nullptr || mallctl == nullptr
-        || mallctlnametomib == nullptr || mallctlbymib == nullptr) {
-      return false;
-    }
-
-    // "volatile" because gcc optimizes out the reads from *counter, because
-    // it "knows" malloc doesn't modify global state...
-    /* nolint */ volatile uint64_t* counter;
-    size_t counterLen = sizeof(uint64_t*);
-
-    if (mallctl("thread.allocatedp", static_cast<void*>(&counter), &counterLen,
-                nullptr, 0) != 0) {
-      return false;
-    }
-
-    if (counterLen != sizeof(uint64_t*)) {
-      return false;
-    }
-
-    uint64_t origAllocated = *counter;
-
-    // Static because otherwise clever compilers will find out that
-    // the ptr is not used and does not escape the scope, so they will
-    // just optimize away the malloc.
-    static void* ptr = malloc(1);
-    if (!ptr) {
-      // wtf, failing to allocate 1 byte
-      return false;
-    }
-
-    return (origAllocated != *counter);
-  }();
-
-  return result;
+  return false;
 }
 
 inline size_t goodMallocSize(size_t minSize) noexcept {
@@ -187,12 +140,7 @@ inline size_t goodMallocSize(size_t minSize) noexcept {
     return 0;
   }
 
-  if (!usingJEMalloc()) {
-    // Not using jemalloc - no smarts
-    return minSize;
-  }
-
-  return nallocx(minSize, 0);
+  return minSize;
 }
 
 // We always request "good" sizes for allocation, so jemalloc can
@@ -242,27 +190,6 @@ inline void* smartRealloc(void* p,
   assert(p);
   assert(currentSize <= currentCapacity &&
          currentCapacity < newCapacity);
-
-  if (usingJEMalloc()) {
-    // using jemalloc's API. Don't forget that jemalloc can never grow
-    // in place blocks smaller than 4096 bytes.
-    //
-    // NB: newCapacity may not be precisely equal to a jemalloc size class,
-    // i.e. newCapacity is not guaranteed to be the result of a
-    // goodMallocSize() call, therefore xallocx() may return more than
-    // newCapacity bytes of space.  Use >= rather than == to check whether
-    // xallocx() successfully expanded in place.
-    if (currentCapacity >= jemallocMinInPlaceExpandable &&
-        xallocx(p, newCapacity, 0, 0) >= newCapacity) {
-      // Managed to expand in place
-      return p;
-    }
-    // Cannot expand; must move
-    auto const result = checkedMalloc(newCapacity);
-    std::memcpy(result, p, currentSize);
-    free(p);
-    return result;
-  }
 
   // No jemalloc no honey
   auto const slack = currentCapacity - currentSize;

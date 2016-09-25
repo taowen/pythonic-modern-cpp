@@ -1,9 +1,11 @@
 #pragma once
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include "folly/Expected.h"
+#include "folly/FBVector.h"
 #include "pcre2.h"
 #include "pythonic/utf8.hpp"
 #include <iostream>
+#include <unordered_map>
 
 using namespace std;
 
@@ -56,10 +58,12 @@ compile(utf8::TextView pattern_str, uint32_t options = 0,
   return RegexObject(pattern_obj);
 }
 
+using GroupDict = unordered_map<utf8::TextView, utf8::TextView>;
+
 class MatchObject {
 public:
   MatchObject(utf8::TextView subject, pcre2_match_data *data)
-      : __subject(subject), __data(data) {}
+      : __subject(subject.retain()), __data(data) {}
   ~MatchObject() {
     if (__data != nullptr) {
       pcre2_match_data_free(__data);
@@ -68,14 +72,15 @@ public:
 
   // move constructor
   MatchObject(MatchObject &&that)
-      : __subject(that.__subject), __data(that.__data) {
+      : __subject(std::move(that.__subject)), __data(that.__data) {
     that.__data = nullptr;
   }
 
   static folly::Expected<MatchObject, int>
-  create(utf8::TextView subject, RegexObject const &pattern,
+  create(utf8::TextView subject, shared_ptr<RegexObject> pattern,
          pcre2_general_context *gcontext = nullptr) {
-    auto match_obj = pcre2_match_data_create_from_pattern(pattern.data(), NULL);
+    auto match_obj =
+        pcre2_match_data_create_from_pattern(pattern->data(), NULL);
     if (match_obj == nullptr) {
       return folly::makeUnexpected(-1);
     }
@@ -90,8 +95,25 @@ public:
       return utf8::TextView();
     }
     auto ovector = pcre2_get_ovector_pointer(__data);
-    return utf8::TextView(__subject.code_units_begin() + ovector[i * 2],
-                          ovector[i * 2 + 1] - ovector[i * 2]);
+    return __subject._.code_units(ovector[i * 2],
+                                  ovector[i * 2 + 1] - ovector[i * 2]);
+  }
+  template <typename V> void groups(V &v) {
+    for (auto i = 1; i < groups_count(); i++) {
+      v.push_back(group(i));
+    }
+  }
+
+  folly::fbvector<utf8::TextView> groups() {
+    folly::fbvector<utf8::TextView> v;
+    groups(v);
+    return std::move(v);
+  }
+
+  GroupDict groupdict() {
+    auto dict = GroupDict{};
+    dict[u8"1"] = u8"2";
+    return dict;
   }
 
   int groups_count() { return pcre2_get_ovector_count(__data); }
@@ -101,7 +123,7 @@ private:
   MatchObject &
   operator=(MatchObject const &) = delete; // disable copy assignment
   pcre2_match_data *__data;
-  utf8::TextView __subject;
+  utf8::RetainedTextView __subject;
 };
 
 folly::Expected<MatchObject, RegexError>
@@ -112,7 +134,7 @@ search(utf8::TextView pattern_str, utf8::TextView subject,
   if (e_pattern.hasError()) {
     return folly::makeUnexpected(e_pattern.error());
   }
-  auto pattern = std::move(e_pattern.value());
+  auto pattern = make_shared<RegexObject>(std::move(e_pattern.value()));
   auto e_match = MatchObject::create(subject, pattern, nullptr);
   if (e_match.hasError()) {
     return folly::makeUnexpected(
@@ -120,7 +142,7 @@ search(utf8::TextView pattern_str, utf8::TextView subject,
   }
   auto match = std::move(e_match.value());
   auto result = pcre2_match(
-      pattern.data(), reinterpret_cast<PCRE2_SPTR>(subject.code_units_begin()),
+      pattern->data(), reinterpret_cast<PCRE2_SPTR>(subject.code_units_begin()),
       subject.code_units_count(), 0, match_options, match.data(), NULL);
   if (result < 0) {
     return folly::makeUnexpected(RegexError{__FILE__, __LINE__, result});

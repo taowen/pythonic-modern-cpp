@@ -1,6 +1,9 @@
 #pragma once
 
+#include "folly/FBString.h"
+#include "folly/FBVector.h"
 #include "range/v3/all.hpp"
+#include <experimental/optional>
 #include <iostream>
 
 using namespace std;
@@ -47,6 +50,8 @@ class TextView;
 bool operator==(TextView const &left, TextView const &right);
 
 template <typename TextView> class TextViewIterator {
+  using my_type = TextViewIterator<TextView>;
+
 public:
   TextViewIterator(TextView text_view)
       : __data(text_view.c_str()), __size(text_view.code_units_count()),
@@ -59,24 +64,22 @@ public:
 
   char32_t operator*() { return __current_code_point; }
 
-  TextViewIterator<TextView> &operator++() {
+  my_type &operator++() {
     advance();
     return *this;
   }
 
-  TextViewIterator<TextView> operator++(int) {
-    TextViewIterator<TextView> tmp(*this);
+  my_type operator++(int) {
+    my_type tmp(*this);
     operator++();
     return tmp;
   }
 
-  bool operator==(TextViewIterator<TextView> const &right) {
+  bool operator==(my_type const &right) {
     return __data == right.__data && __size == right.__size;
   }
 
-  bool operator!=(TextViewIterator<TextView> const &right) {
-    return !(*this == right);
-  }
+  bool operator!=(my_type const &right) { return !(*this == right); }
 
   char const *current() { return __data; }
 
@@ -94,19 +97,49 @@ private:
   size_t __next_step;
 };
 
+template <typename TextView> struct _RetainedTextView {
+public:
+  folly::fbstring owner;
+  TextView _;
+  _RetainedTextView(folly::fbstring owner) : owner(std::move(owner)) {
+    _ = TextView(&this->owner);
+  }
+  _RetainedTextView(_RetainedTextView<TextView> const &that)
+      : owner(that.owner), _(that._) {}
+  _RetainedTextView(_RetainedTextView<TextView> &&that)
+      : owner(std::move(that.owner)) {
+    _ = TextView(&this->owner);
+  }
+};
+
 class TextView {
 public:
-  constexpr TextView() noexcept : __data(nullptr), __size(0) {}
-  TextView(char const *data) noexcept : __data(data), __size(strlen(data)) {}
-  constexpr TextView(string const &str) noexcept
-      : __data(str.c_str()), __size(str.size()) {}
-  constexpr TextView(char const *data, size_t size) noexcept
-      : __data(data), __size(size) {}
+  constexpr TextView() noexcept
+      : __owner(nullptr), __begin(nullptr), __size(0) {}
+  constexpr TextView(folly::fbstring const *owner, char const *begin,
+                     size_t size) noexcept
+      : __owner(owner), __begin(begin), __size(size) {}
+  TextView(folly::fbstring const *owner) noexcept
+      : __owner(owner), __begin(owner->c_str()), __size(owner->size()) {}
+  TextView(const char *data) noexcept
+      : __owner(nullptr), __begin(data), __size(strlen(data)) {}
+
+  _RetainedTextView<TextView> retain() {
+    if (__owner == nullptr) {
+      return _RetainedTextView<TextView>(folly::fbstring(__begin, __size));
+    } else {
+      return _RetainedTextView<TextView>(*__owner);
+    }
+  }
+
   constexpr size_t code_units_count() const noexcept { return __size; }
-  constexpr char const *c_str() const noexcept { return __data; }
-  constexpr char const *code_units_begin() const noexcept { return __data; }
+  constexpr char const *c_str() const noexcept { return __begin; }
+  constexpr char const *code_units_begin() const noexcept { return __begin; }
   constexpr char const *code_units_end() const noexcept {
-    return __data + __size;
+    return __begin + __size;
+  }
+  constexpr TextView code_units(size_t pos, size_t size) {
+    return TextView(__owner, __begin + pos, size);
   }
 
   TextViewIterator<TextView> begin() {
@@ -178,7 +211,7 @@ public:
     if (sub_begin == nullptr) {
       return TextView();
     }
-    return TextView(sub_begin, size_t(sub_end - sub_begin));
+    return TextView(__owner, sub_begin, size_t(sub_end - sub_begin));
   }
 
   size_t find(TextView needle) {
@@ -188,7 +221,7 @@ public:
     }
     for (auto cur = code_units_begin(); cur < code_units_end() - needle_len;
          cur++) {
-      if (TextView(cur, needle_len) == needle) {
+      if (TextView(__owner, cur, needle_len) == needle) {
         return size_t(cur - code_units_begin());
       }
     }
@@ -202,7 +235,7 @@ public:
     }
     for (auto cur = code_units_end() - needle_len - 1;
          cur != code_units_begin() - 1; cur--) {
-      if (TextView(cur, needle_len) == needle) {
+      if (TextView(__owner, cur, needle_len) == needle) {
         return size_t(cur - code_units_begin());
       }
     }
@@ -212,7 +245,7 @@ public:
   TextView lstrip() const noexcept {
     for (auto cur = code_units_begin(); cur != code_units_end(); cur++) {
       if (!std::isspace(*cur)) {
-        return TextView(cur, size_t(code_units_end() - cur));
+        return TextView(__owner, cur, size_t(code_units_end() - cur));
       }
     }
     return TextView();
@@ -222,7 +255,7 @@ public:
     for (auto cur = code_units_end() - 1; cur != code_units_begin() - 1;
          cur--) {
       if (!std::isspace(*cur)) {
-        return TextView(code_units_begin(),
+        return TextView(__owner, code_units_begin(),
                         size_t(cur - code_units_begin() + 1));
       }
     }
@@ -235,18 +268,20 @@ public:
     if (right.code_units_count() > code_units_count()) {
       return false;
     }
-    return TextView(code_units_begin(), right.code_units_count()) == right;
+    return TextView(__owner, code_units_begin(), right.code_units_count()) ==
+           right;
   }
 
   bool endswith(TextView right) const noexcept {
     if (right.code_units_count() > code_units_count()) {
       return false;
     }
-    return TextView(code_units_end() - right.code_units_count(),
+    return TextView(__owner, code_units_end() - right.code_units_count(),
                     right.code_units_count()) == right;
   }
 
-  template <typename S> TextView lower(S &out) const {
+  folly::fbstring lower() const {
+    auto out = folly::fbstring{};
     out.reserve(code_units_count());
     for (auto cur = code_units_begin(); cur != code_units_end(); cur++) {
       out.push_back(char(std::tolower(*cur)));
@@ -254,13 +289,8 @@ public:
     return out;
   }
 
-  string lower() const {
-    auto out = string{};
-    lower(out);
-    return out;
-  }
-
-  template <typename S> TextView upper(S &out) const {
+  folly::fbstring upper() const {
+    auto out = folly::fbstring{};
     out.reserve(code_units_count());
     for (auto cur = code_units_begin(); cur < code_units_end(); cur++) {
       out.push_back(char(std::toupper(*cur)));
@@ -268,13 +298,8 @@ public:
     return out;
   }
 
-  string upper() const {
-    auto out = string{};
-    upper(out);
-    return out;
-  }
-
-  template <typename V> auto split(TextView needle, V &parts) const {
+  folly::fbvector<TextView> split(TextView needle) const {
+    auto parts = folly::fbvector<TextView>{};
     auto needle_len = needle.code_units_count();
     auto cur = code_units_begin();
     auto last = code_units_begin();
@@ -283,37 +308,31 @@ public:
       return parts;
     }
     for (; cur <= code_units_end() - needle_len; cur++) {
-      if (TextView(cur, needle_len) == needle) {
-        parts.emplace_back(last, cur - last);
+      if (TextView(__owner, cur, needle_len) == needle) {
+        parts.emplace_back(__owner, last, cur - last);
         cur += needle_len;
         last = cur;
       }
     }
-    parts.emplace_back(last, code_units_end() - last);
+    parts.emplace_back(__owner, last, code_units_end() - last);
     return parts;
   }
 
-  vector<TextView> split(TextView needle) const {
-    auto parts = vector<TextView>{};
-    split(needle, parts);
-    return parts;
-  }
-
-  template <typename S>
-  TextView replace(TextView needle, TextView replacement, size_t count,
-                   S &out) const {
+  folly::fbstring replace(TextView needle, TextView replacement,
+                          size_t count = -1) {
+    auto out = folly::fbstring{};
     auto needle_len = needle.code_units_count();
     if (needle_len == 0) {
-      out.append(__data, __size);
+      out.append(__begin, __size);
       return out;
     }
     auto last = code_units_begin();
     for (auto cur = code_units_begin();
          cur != code_units_end() - needle_len && count > 0;) {
-      if (TextView(cur, needle_len) == needle) {
+      if (TextView(__owner, cur, needle_len) == needle) {
         count--;
         out.append(last, cur - last);
-        out.append(replacement.__data, replacement.__size);
+        out.append(replacement.__begin, replacement.__size);
         cur += needle_len;
         last = cur;
       } else {
@@ -324,20 +343,17 @@ public:
     return out;
   }
 
-  string replace(TextView needle, TextView replacement, size_t count = -1) {
-    auto out = string{};
-    replace(needle, replacement, count, out);
-    return out;
-  }
-
 private:
-  char const *__data;
+  char const *__begin;
   size_t __size;
+  folly::fbstring const *__owner; // owner of the block of memory
 };
+
+using RetainedTextView = _RetainedTextView<TextView>;
 
 namespace literals {
 constexpr TextView operator"" _v(char const *self, size_t len) {
-  return TextView(self, len);
+  return TextView(nullptr, self, len);
 }
 }
 size_t len(TextView input) noexcept { return input.code_points_count(); }
@@ -372,7 +388,8 @@ class ConcatedTextViews : public vector<TextView> {
 public:
   using vector<TextView>::vector;
 
-  template <typename S> TextView to_str(S &out) {
+  folly::fbstring to_str() const {
+    auto out = folly::fbstring{};
     auto len = size_t(0);
     for (auto const &view : *this) {
       len += view.code_units_count();
@@ -387,11 +404,7 @@ public:
     return out;
   }
 
-  string to_str() {
-    auto out = string{};
-    to_str(out);
-    return out;
-  }
+  operator folly::fbstring() const { return to_str(); }
 };
 
 ConcatedTextViews operator+(TextView const &left, TextView const &right) {
@@ -417,4 +430,17 @@ ConcatedTextViews operator+(ConcatedTextViews left,
   return left;
 }
 }
+}
+
+namespace std {
+using pythonic::utf8::TextView;
+template <> struct hash<TextView> {
+  size_t operator()(TextView const &x) const {
+    size_t hash = 0;
+    for (auto cur = x.code_units_begin(); cur != x.code_units_end(); cur++) {
+      hash = (hash << 5) - hash + *cur;
+    }
+    return hash;
+  }
+};
 }

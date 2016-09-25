@@ -1,4 +1,6 @@
 module folly {
     export *
     header "folly/Expected.h"
+    header "folly/FBString.h"
+    header "folly/FBVector.h"
 }

@@ -2,6 +2,7 @@
 #include "catch_with_main.hpp"
 #include "fmt/all.hpp"
 #include "folly/Expected.h"
+#include "folly/FBString.h"
 #include "pythonic/regexs.hpp"
 #include "pythonic/utf8.hpp"
 #include <codecvt>
@@ -82,32 +83,32 @@ def)!!"_v;
 
 TEST_CASE("split empty with empty") {
   auto parts = u8""_v.split(u8"");
-  CHECK(vector<utf8::TextView>{u8""} == parts);
+  CHECK(folly::fbvector<utf8::TextView>{u8""} == parts);
 }
 
 TEST_CASE("split none empty with empty") {
   auto parts = u8"hello"_v.split(u8"");
-  CHECK(vector<utf8::TextView>{u8"hello"} == parts);
+  CHECK(folly::fbvector<utf8::TextView>{u8"hello"} == parts);
 }
 
 TEST_CASE("split with match in begin") {
   auto parts = u8"hello"_v.split(u8"h");
-  CHECK((vector<utf8::TextView>{u8"", u8"ello"}) == parts);
+  CHECK((folly::fbvector<utf8::TextView>{u8"", u8"ello"}) == parts);
 }
 
 TEST_CASE("split with match in end") {
   auto parts = u8"hello"_v.split(u8"o");
-  CHECK((vector<utf8::TextView>{u8"hell", u8""}) == parts);
+  CHECK((folly::fbvector<utf8::TextView>{u8"hell", u8""}) == parts);
 }
 
 TEST_CASE("split with multiple code units") {
   auto parts = u8"hello"_v.split(u8"ll");
-  CHECK((vector<utf8::TextView>{u8"he", u8"o"}) == parts);
+  CHECK((folly::fbvector<utf8::TextView>{u8"he", u8"o"}) == parts);
 }
 
 TEST_CASE("split with multiple code units not found") {
   auto parts = u8"hello"_v.split(u8"lli");
-  CHECK((vector<utf8::TextView>{u8"hello"}) == parts);
+  CHECK((folly::fbvector<utf8::TextView>{u8"hello"}) == parts);
 }
 
 TEST_CASE("003") {
@@ -124,14 +125,13 @@ TEST_CASE("004") {
   // concat two
   auto str1 = u8"hello"_v;
   auto str2 = u8" world"_v;
-  auto out = string{};
-  CHECK(u8"hello world" == ((str1 + str2).to_str(out)));
+  CHECK(u8"hello world" == ((str1 + str2).to_str()));
 
   // concat many
   auto str3 = u8"!"_v;
-  CHECK(u8"hello world!" == ((str1 + str2 + str3).to_str(out)));
-  CHECK(u8"hello world!" == ((str1 + (str2 + str3)).to_str(out)));
-  CHECK(u8"hello! world!" == (((str1 + str3) + (str2 + str3)).to_str(out)));
+  CHECK(u8"hello world!" == ((str1 + str2 + str3).to_str()));
+  CHECK(u8"hello world!" == ((str1 + (str2 + str3)).to_str()));
+  CHECK(u8"hello! world!" == (((str1 + str3) + (str2 + str3)).to_str()));
 
   // allocate string intenrally
   CHECK(u8"hello world" == ((str1 + str2).to_str()));
@@ -212,10 +212,21 @@ TEST_CASE("012") {
 }
 
 TEST_CASE("013") {
-  CHECK(u8"中文" == re::search(u8"(.)(.)", u8"中文字符").value().group());
-  CHECK(u8"中" == re::search(u8"(.)(.)", u8"中文字符").value().group(1));
-  CHECK(u8"文" == re::search(u8"(.)(.)", u8"中文字符").value().group(2));
-  CHECK(u8"" == re::search(u8"(.)(.)", u8"中文字符").value().group(3));
+  auto match = re::search(u8"(.)(.)", u8"中文字符").value();
+  CHECK(u8"中文" == match.group());
+  CHECK(u8"中" == match.group(1));
+  CHECK(u8"文" == match.group(2));
+  CHECK(3 == match.groups_count());
+  CHECK(u8"" == match.group(3));
+  CHECK((folly::fbvector<utf8::TextView>{u8"中", u8"文"}) == match.groups());
+}
+
+TEST_CASE("014") {
+  auto match = re::search(u8"(?P<p1>.)(.)", u8"中文字符").value();
+  CHECK(u8"中" == match.group(1));
+  CHECK(u8"文" == match.group(2));
+  auto str = folly::fbstring{"hello"};
+  //  CHECK((re::GroupDict{{u8"p1", u8"中"}}) == match.groupdict());
 }
 
 // TEST_CASE("014") {
