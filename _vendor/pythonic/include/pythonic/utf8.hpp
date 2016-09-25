@@ -50,6 +50,11 @@ class TextView;
 bool operator==(TextView const &left, TextView const &right);
 
 template <typename TextView> class TextViewIterator {
+
+  char const *__data;
+  size_t __size;
+  char32_t __current_code_point;
+  size_t __next_step;
   using my_type = TextViewIterator<TextView>;
 
 public:
@@ -91,28 +96,28 @@ private:
       __next_step = decode_utf8(__data, __size, __current_code_point);
     }
   }
-  char const *__data;
-  size_t __size;
-  char32_t __current_code_point;
-  size_t __next_step;
 };
 
 template <typename TextView> struct _RetainedTextView {
 public:
-  folly::fbstring owner;
-  TextView _;
-  _RetainedTextView(folly::fbstring owner) : owner(std::move(owner)) {
-    _ = TextView(&this->owner);
+  folly::fbstring str; // use as fbstring
+  TextView _;          // use as text view
+
+  _RetainedTextView(folly::fbstring owner) : str(std::move(owner)) {
+    _ = TextView(&this->str);
   }
   _RetainedTextView(_RetainedTextView<TextView> const &that)
-      : owner(that.owner), _(that._) {}
+      : str(that.str), _(that._) {}
   _RetainedTextView(_RetainedTextView<TextView> &&that)
-      : owner(std::move(that.owner)) {
-    _ = TextView(&this->owner);
+      : str(std::move(that.str)) {
+    _ = TextView(&this->str);
   }
 };
 
 class TextView {
+  char const *__begin;
+  size_t __size;
+  folly::fbstring const *__owner; // owner of the block of memory
 public:
   constexpr TextView() noexcept
       : __owner(nullptr), __begin(nullptr), __size(0) {}
@@ -121,9 +126,14 @@ public:
       : __owner(owner), __begin(begin), __size(size) {}
   TextView(folly::fbstring const *owner) noexcept
       : __owner(owner), __begin(owner->c_str()), __size(owner->size()) {}
+  TextView(folly::fbstring const &owner) noexcept
+      : __owner(&owner), __begin(owner.c_str()), __size(owner.size()) {}
+  TextView(std::string const &data) noexcept
+      : __owner(nullptr), __begin(data.c_str()), __size(data.size()) {}
   TextView(const char *data) noexcept
       : __owner(nullptr), __begin(data), __size(strlen(data)) {}
 
+  // TextView is like a weak_ptr, retain turn it into a shared ownership
   _RetainedTextView<TextView> retain() {
     if (__owner == nullptr) {
       return _RetainedTextView<TextView>(folly::fbstring(__begin, __size));
@@ -342,14 +352,9 @@ public:
     out.append(last, code_units_end() - last);
     return out;
   }
-
-private:
-  char const *__begin;
-  size_t __size;
-  folly::fbstring const *__owner; // owner of the block of memory
 };
 
-using RetainedTextView = _RetainedTextView<TextView>;
+using TextHolder = _RetainedTextView<TextView>;
 
 namespace literals {
 constexpr TextView operator"" _v(char const *self, size_t len) {
@@ -388,8 +393,9 @@ class ConcatedTextViews : public vector<TextView> {
 public:
   using vector<TextView>::vector;
 
-  folly::fbstring to_str() const {
-    auto out = folly::fbstring{};
+  ConcatedTextViews(TextView const &text_view) { push_back(text_view); }
+
+  template <typename S> void to_str(S &out) const {
     auto len = size_t(0);
     for (auto const &view : *this) {
       len += view.code_units_count();
@@ -401,10 +407,35 @@ public:
       strncpy(cur, view.c_str(), view_len);
       cur += view_len;
     }
+  }
+
+  ConcatedTextViews &operator+=(ConcatedTextViews const &that) {
+    insert(end(), that.begin(), that.end());
+    return *this;
+  }
+
+  ConcatedTextViews &operator+=(TextView const &that) {
+    push_back(that);
+    return *this;
+  }
+
+  folly::fbstring to_str() const {
+    folly::fbstring out;
+    to_str(out);
     return out;
   }
 
-  operator folly::fbstring() const { return to_str(); }
+  operator folly::fbstring() const {
+    folly::fbstring out;
+    to_str(out);
+    return out;
+  }
+
+  operator std::string() const {
+    std::string out;
+    to_str(out);
+    return out;
+  }
 };
 
 ConcatedTextViews operator+(TextView const &left, TextView const &right) {

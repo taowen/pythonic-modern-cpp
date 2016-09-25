@@ -225,8 +225,18 @@ TEST_CASE("014") {
   auto match = re::search(u8"(?P<p1>.)(.)", u8"中文字符").value();
   CHECK(u8"中" == match.group(1));
   CHECK(u8"文" == match.group(2));
-  auto str = folly::fbstring{"hello"};
-  //  CHECK((re::GroupDict{{u8"p1", u8"中"}}) == match.groupdict());
+  CHECK((re::GroupDict{{u8"p1", u8"中"}}) == match.groupdict());
+}
+
+auto test_match_retain_ownership() {
+  folly::fbstring str;
+  str.append(u8"中文");
+  str.append(u8"字符");
+  return re::search(u8"(.)(.)", str).value();
+}
+
+TEST_CASE("match retain ownership") {
+  CHECK(u8"中" == test_match_retain_ownership().group(1));
 }
 
 // TEST_CASE("014") {
