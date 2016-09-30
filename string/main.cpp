@@ -14,6 +14,7 @@
 using namespace std;
 using namespace pythonic;
 using namespace pythonic::utf8::literals;
+using namespace ranges::v3;
 
 const auto a1 = numeric_limits<int>::digits;
 const auto a2 = integral_constant<int, 1>::value;
@@ -241,6 +242,15 @@ TEST_CASE("match retain ownership") {
   auto match = test_match_retain_ownership();
   CHECK(u8"中文" == match.group(0));
   CHECK(u8"中" == match.group(1));
+}
+
+TEST_CASE("015") {
+  auto matches = re::finditer(u8"中", u8"中文中").value();
+  auto matched_groups =
+      matches |
+      view::transform([](auto const &match) { return match.group(); }) |
+      ranges::to_vector;
+  CHECK((vector<utf8::TextView>{u8"中", u8"中"}) == matched_groups);
 }
 
 // TEST_CASE("014") {
