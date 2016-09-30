@@ -64,7 +64,7 @@ TEST_CASE("001") {
   CHECK(4 == (str3.code_points_count()));
   CHECK(u8"文字" == (str3[{1, 3}]));
 
-  // utf8::TextView is iterable as char32_t
+  // utf8::Text is iterable as char32_t
   auto count = 0;
   for (char32_t c : str3) {
     count += 1;
@@ -226,17 +226,21 @@ TEST_CASE("014") {
   CHECK(u8"中" == match.group(1));
   CHECK(u8"文" == match.group(2));
   CHECK((re::GroupDict{{u8"p1", u8"中"}}) == match.groupdict());
+  auto str = utf8::SharedText(u8"hello");
 }
 
 auto test_match_retain_ownership() {
   folly::fbstring str;
   str.append(u8"中文");
   str.append(u8"字符");
-  return re::search(u8"(.)(.)", str).value();
+  auto match = re::search(u8"(.)(.)", str).value();
+  return match;
 }
 
 TEST_CASE("match retain ownership") {
-  CHECK(u8"中" == test_match_retain_ownership().group(1));
+  auto match = test_match_retain_ownership();
+  CHECK(u8"中文" == match.group(0));
+  CHECK(u8"中" == match.group(1));
 }
 
 // TEST_CASE("014") {

@@ -110,13 +110,13 @@ using GroupDict = unordered_map<utf8::TextView, utf8::TextView>;
 
 class MatchObject {
   pcre2_match_data *__data;
-  utf8::TextHolder __subject;
+  utf8::SharedText __subject;
   shared_ptr<RegexObject> __pattern;
 
 public:
-  MatchObject(utf8::TextView subject, shared_ptr<RegexObject> pattern,
+  MatchObject(utf8::SharedText subject, shared_ptr<RegexObject> pattern,
               pcre2_match_data *data)
-      : __subject(subject.retain()), __pattern(pattern), __data(data) {}
+      : __subject(subject), __pattern(pattern), __data(data) {}
   ~MatchObject() {
     if (__data != nullptr) {
       pcre2_match_data_free(__data);
@@ -125,12 +125,13 @@ public:
 
   // move constructor
   MatchObject(MatchObject &&that)
-      : __subject(std::move(that.__subject)), __pattern(std::move(that.__pattern)), __data(that.__data) {
+      : __subject(std::move(that.__subject)),
+        __pattern(std::move(that.__pattern)), __data(that.__data) {
     that.__data = nullptr;
   }
 
   static folly::Expected<MatchObject, int>
-  create(utf8::TextView subject, shared_ptr<RegexObject> pattern,
+  create(utf8::SharedText subject, shared_ptr<RegexObject> pattern,
          pcre2_general_context *gcontext = nullptr) {
     auto match_obj =
         pcre2_match_data_create_from_pattern(pattern->data(), NULL);
@@ -148,8 +149,8 @@ public:
       return utf8::TextView();
     }
     auto ovector = pcre2_get_ovector_pointer(__data);
-    return __subject._.code_units(ovector[i * 2],
-                                  ovector[i * 2 + 1] - ovector[i * 2]);
+    return utf8::TextView(__subject.code_units_begin() + ovector[i * 2],
+                          ovector[i * 2 + 1] - ovector[i * 2]);
   }
 
   folly::fbvector<utf8::TextView> groups() {
@@ -172,6 +173,8 @@ public:
 
   int groups_count() { return pcre2_get_ovector_count(__data); }
 
+  utf8::SharedText subject() { return __subject; }
+
 private:
   MatchObject(MatchObject const &that) = delete; // disable copy constructor
   MatchObject &
@@ -179,7 +182,7 @@ private:
 };
 
 folly::Expected<MatchObject, RegexError>
-search(utf8::TextView pattern_str, utf8::TextView subject,
+search(utf8::TextView pattern_str, utf8::SharedText subject,
        uint32_t pattern_options = 0, uint32_t match_options = 0,
        pcre2_compile_context *ccontext = nullptr) {
   auto e_pattern = compile(pattern_str, pattern_options, ccontext);

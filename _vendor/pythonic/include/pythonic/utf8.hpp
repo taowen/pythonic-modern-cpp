@@ -46,25 +46,22 @@ inline size_t decode_utf8(const char *src, size_t n) noexcept {
   }
 }
 
-class TextView;
-bool operator==(TextView const &left, TextView const &right);
-
-template <typename TextView> class TextViewIterator {
+template <typename TextView> class TextIterator {
 
   char const *__data;
   size_t __size;
   char32_t __current_code_point;
   size_t __next_step;
-  using my_type = TextViewIterator<TextView>;
+  using my_type = TextIterator<TextView>;
 
 public:
-  TextViewIterator(TextView text_view)
-      : __data(text_view.c_str()), __size(text_view.code_units_count()),
-        __next_step(0), __current_code_point(0) {
+  TextIterator(TextView text)
+      : __data(text.c_str()), __size(text.code_units_count()), __next_step(0),
+        __current_code_point(0) {
     advance();
   }
-  TextViewIterator(TextView text_view, size_t current_pos)
-      : __data(text_view.c_str() + current_pos), __size(0), __next_step(0),
+  TextIterator(TextView text, size_t current_pos)
+      : __data(text.c_str() + current_pos), __size(0), __next_step(0),
         __current_code_point(0) {}
 
   char32_t operator*() { return __current_code_point; }
@@ -98,66 +95,104 @@ private:
   }
 };
 
-template <typename TextView> struct _RetainedTextView {
+class RawTextOwner {
 public:
-  folly::fbstring str; // use as fbstring
-  TextView _;          // use as text view
+  constexpr RawTextOwner() noexcept : __data(nullptr), __size(0) {}
+  RawTextOwner(RawTextOwner const &that) noexcept = default;
+  constexpr RawTextOwner(folly::fbstring const &data) noexcept
+      : __data(data.c_str()), __size(data.size()) {}
+  constexpr RawTextOwner(folly::fbstring data) noexcept = delete;
+  constexpr RawTextOwner(char const *data, size_t size) noexcept
+      : __data(data), __size(size) {}
 
-  _RetainedTextView(folly::fbstring owner) : str(std::move(owner)) {
-    _ = TextView(&this->str);
+  char const *begin() const { return __data; }
+  size_t size() const { return __size; }
+  RawTextOwner substr(size_t pos, size_t size) const {
+    return RawTextOwner(__data + pos, size);
   }
-  _RetainedTextView(_RetainedTextView<TextView> const &that)
-      : str(that.str), _(that._) {}
-  _RetainedTextView(_RetainedTextView<TextView> &&that)
-      : str(std::move(that.str)) {
-    _ = TextView(&this->str);
-  }
+
+private:
+  char const *__data;
+  size_t __size;
 };
 
-class TextView {
-  char const *__begin;
-  size_t __size;
-  folly::fbstring const *__owner; // owner of the block of memory
+class SharedTextOwner {
 public:
-  constexpr TextView() noexcept
-      : __owner(nullptr), __begin(nullptr), __size(0) {}
-  constexpr TextView(folly::fbstring const *owner, char const *begin,
-                     size_t size) noexcept
-      : __owner(owner), __begin(begin), __size(size) {}
-  TextView(folly::fbstring const *owner) noexcept
-      : __owner(owner), __begin(owner->c_str()), __size(owner->size()) {}
-  TextView(folly::fbstring const &owner) noexcept
-      : __owner(&owner), __begin(owner.c_str()), __size(owner.size()) {}
-  TextView(std::string const &data) noexcept
-      : __owner(nullptr), __begin(data.c_str()), __size(data.size()) {}
-  TextView(const char *data) noexcept
-      : __owner(nullptr), __begin(data), __size(strlen(data)) {}
-
-  // TextView is like a weak_ptr, retain turn it into a shared ownership
-  _RetainedTextView<TextView> retain() {
-    if (__owner == nullptr) {
-      return _RetainedTextView<TextView>(folly::fbstring(__begin, __size));
-    } else {
-      return _RetainedTextView<TextView>(*__owner);
-    }
+  SharedTextOwner() noexcept {}
+  SharedTextOwner(SharedTextOwner const &that) = default;
+  SharedTextOwner(SharedTextOwner &&that) noexcept
+      : __data(std::move(that.__data)) {}
+  SharedTextOwner(folly::fbstring data) noexcept : __data(std::move(data)) {}
+  SharedTextOwner(char const *data, size_t len) noexcept {
+    __data = __data.append(data, len);
   }
 
-  constexpr size_t code_units_count() const noexcept { return __size; }
-  constexpr char const *c_str() const noexcept { return __begin; }
-  constexpr char const *code_units_begin() const noexcept { return __begin; }
+  SharedTextOwner &operator=(SharedTextOwner const &that) {
+    __data = that.__data;
+    return *this;
+  }
+  SharedTextOwner &operator=(SharedTextOwner &&that) {
+    __data = std::move(that.__data);
+    return *this;
+  }
+
+  char const *begin() const { return __data.c_str(); }
+  size_t size() const { return __data.size(); }
+  SharedTextOwner substr(size_t pos, size_t size) const {
+    return SharedTextOwner(__data.substr(pos, size));
+  }
+
+private:
+  folly::fbstring __data;
+};
+
+template <typename TextOwner> class TextReadOperations {
+  using my_type = TextReadOperations<TextOwner>;
+  TextOwner __owner; // owner of the block of memory
+public:
+  constexpr TextReadOperations() noexcept : __owner(TextOwner()) {}
+  constexpr TextReadOperations(TextReadOperations<TextOwner> const &that)
+      : __owner(that.__owner) {}
+  constexpr TextReadOperations(TextReadOperations<TextOwner> &&that)
+      : __owner(std::move(that.__owner)) {}
+  TextReadOperations(TextOwner owner) noexcept : __owner(std::move(owner)) {}
+  TextReadOperations(folly::fbstring const &data) noexcept
+      : __owner(TextOwner(data)) {}
+  explicit TextReadOperations(folly::fbstring data) noexcept
+      : __owner(TextOwner(std::move(data))) {}
+  TextReadOperations(std::string const &data) noexcept
+      : __owner(TextOwner(data.c_str(), data.size())) {}
+  TextReadOperations(const char *data) noexcept
+      : __owner(TextOwner(data, strlen(data))) {}
+  constexpr TextReadOperations(const char *data, size_t size) noexcept
+      : __owner(TextOwner(data, size)) {}
+
+  my_type &operator=(my_type const &that) {
+    __owner = that.__owner;
+    return *this;
+  }
+
+  my_type &operator=(my_type &&that) {
+    __owner = std::move(that.__owner);
+    return *this;
+  }
+
+  constexpr size_t code_units_count() const noexcept { return __owner.size(); }
+  constexpr char const *c_str() const noexcept { return __owner.begin(); }
+  constexpr char const *code_units_begin() const noexcept {
+    return __owner.begin();
+  }
   constexpr char const *code_units_end() const noexcept {
-    return __begin + __size;
+    return __owner.begin() + __owner.size();
   }
-  constexpr TextView code_units(size_t pos, size_t size) {
-    return TextView(__owner, __begin + pos, size);
-  }
-
-  TextViewIterator<TextView> begin() {
-    return TextViewIterator<TextView>(*this);
+  constexpr my_type code_units(size_t pos, size_t size) const noexcept {
+    return my_type(__owner.substr(pos, size));
   }
 
-  TextViewIterator<TextView> end() {
-    return TextViewIterator<TextView>(*this, code_units_count());
+  TextIterator<my_type> begin() { return TextIterator<my_type>(*this); }
+
+  TextIterator<my_type> end() {
+    return TextIterator<my_type>(*this, code_units_count());
   }
 
   size_t code_points_count() const noexcept {
@@ -171,40 +206,40 @@ public:
     return length;
   }
 
-  TextView
+  my_type
   operator[](rng_detail::slice_bounds<size_t, ranges::end_fn> offs) const
       noexcept {
     return (*this)[{offs.from, code_points_count()}];
   }
 
-  TextView operator[](
+  my_type operator[](
       rng_detail::slice_bounds<size_t, rng_detail::from_end_<long>> offs) const
       noexcept {
     return (*this)[{offs.from, long(code_points_count()) + offs.to.dist_}];
   }
 
-  TextView operator[](
+  my_type operator[](
       rng_detail::slice_bounds<rng_detail::from_end_<long>, ranges::end_fn>
           offs) const noexcept {
     return (*this)[{long(code_points_count()) + offs.from.dist_,
                     code_points_count()}];
   }
 
-  TextView
+  my_type
   operator[](rng_detail::slice_bounds<rng_detail::from_end_<long>> offs) const
       noexcept {
     return (*this)[{long(code_points_count()) + offs.from.dist_,
                     long(code_points_count()) + offs.to.dist_}];
   }
 
-  TextView operator[](rng_detail::slice_bounds<long> offs) const noexcept {
+  my_type operator[](rng_detail::slice_bounds<long> offs) const noexcept {
     auto cur = this->code_units_begin();
     auto end = this->code_units_end();
     decltype(this->code_units_begin()) sub_begin = nullptr;
     auto sub_end = end;
     auto visited = 0;
     if (offs.to <= offs.from) {
-      return TextView();
+      return my_type();
     }
     while (cur != end) {
       if (visited == offs.from) {
@@ -219,75 +254,92 @@ public:
       visited++;
     }
     if (sub_begin == nullptr) {
-      return TextView();
+      return my_type();
     }
-    return TextView(__owner, sub_begin, size_t(sub_end - sub_begin));
+    return code_units(sub_begin - code_units_begin(),
+                      size_t(sub_end - sub_begin));
   }
 
-  size_t find(TextView needle) {
+  template <typename T> size_t find(T needle) {
     auto needle_len = needle.code_units_count();
     if (needle_len == 0) {
       return npos;
     }
     for (auto cur = code_units_begin(); cur < code_units_end() - needle_len;
          cur++) {
-      if (TextView(__owner, cur, needle_len) == needle) {
+      if (0 == strncmp(cur, needle.code_units_begin(), needle_len)) {
         return size_t(cur - code_units_begin());
       }
     }
     return npos;
   }
 
-  size_t rfind(TextView needle) const {
+  size_t find(char const *needle) {
+    return find(TextReadOperations<RawTextOwner>(needle));
+  }
+
+  template <typename T> size_t rfind(T needle) const {
     auto needle_len = needle.code_units_count();
     if (needle_len == 0) {
       return npos;
     }
     for (auto cur = code_units_end() - needle_len - 1;
          cur != code_units_begin() - 1; cur--) {
-      if (TextView(__owner, cur, needle_len) == needle) {
+      if (0 == strncmp(cur, needle.code_units_begin(), needle_len)) {
         return size_t(cur - code_units_begin());
       }
     }
     return npos;
   }
 
-  TextView lstrip() const noexcept {
-    for (auto cur = code_units_begin(); cur != code_units_end(); cur++) {
-      if (!std::isspace(*cur)) {
-        return TextView(__owner, cur, size_t(code_units_end() - cur));
-      }
-    }
-    return TextView();
+  size_t rfind(char const *needle) {
+    return rfind(TextReadOperations<RawTextOwner>(needle));
   }
 
-  TextView rstrip() const noexcept {
+  my_type lstrip() const noexcept {
+    for (auto cur = code_units_begin(); cur != code_units_end(); cur++) {
+      if (!std::isspace(*cur)) {
+        return code_units(cur - code_units_begin(),
+                          size_t(code_units_end() - cur));
+      }
+    }
+    return my_type();
+  }
+
+  my_type rstrip() const noexcept {
     for (auto cur = code_units_end() - 1; cur != code_units_begin() - 1;
          cur--) {
       if (!std::isspace(*cur)) {
-        return TextView(__owner, code_units_begin(),
-                        size_t(cur - code_units_begin() + 1));
+        return code_units(0, size_t(cur - code_units_begin() + 1));
       }
     }
-    return TextView();
+    return my_type();
   }
 
-  TextView strip() const noexcept { return lstrip().rstrip(); }
+  my_type strip() const noexcept { return lstrip().rstrip(); }
 
-  bool startswith(TextView right) const noexcept {
+  template <typename T> bool startswith(T right) const noexcept {
     if (right.code_units_count() > code_units_count()) {
       return false;
     }
-    return TextView(__owner, code_units_begin(), right.code_units_count()) ==
-           right;
+    return 0 == strncmp(code_units_begin(), right.code_units_begin(),
+                        right.code_units_count());
   }
 
-  bool endswith(TextView right) const noexcept {
+  bool startswith(char const *right) const noexcept {
+    return startswith(TextReadOperations<RawTextOwner>(right));
+  }
+
+  template <typename T> bool endswith(T right) const noexcept {
     if (right.code_units_count() > code_units_count()) {
       return false;
     }
-    return TextView(__owner, code_units_end() - right.code_units_count(),
-                    right.code_units_count()) == right;
+    return 0 == strncmp(code_units_end() - right.code_units_count(),
+                        right.code_units_begin(), right.code_units_count());
+  }
+
+  bool endswith(char const *right) const noexcept {
+    return endswith(TextReadOperations<RawTextOwner>(right));
   }
 
   folly::fbstring lower() const {
@@ -308,8 +360,8 @@ public:
     return out;
   }
 
-  folly::fbvector<TextView> split(TextView needle) const {
-    auto parts = folly::fbvector<TextView>{};
+  template <typename T> folly::fbvector<my_type> split(T needle) const {
+    auto parts = folly::fbvector<my_type>{};
     auto needle_len = needle.code_units_count();
     auto cur = code_units_begin();
     auto last = code_units_begin();
@@ -318,31 +370,40 @@ public:
       return parts;
     }
     for (; cur <= code_units_end() - needle_len; cur++) {
-      if (TextView(__owner, cur, needle_len) == needle) {
-        parts.emplace_back(__owner, last, cur - last);
+      if (0 ==
+          strncmp(cur, needle.code_units_begin(), needle.code_units_count())) {
+        parts.emplace_back(
+            __owner.substr(last - code_units_begin(), cur - last));
         cur += needle_len;
         last = cur;
       }
     }
-    parts.emplace_back(__owner, last, code_units_end() - last);
+    parts.emplace_back(
+        __owner.substr(last - code_units_begin(), code_units_end() - last));
     return parts;
   }
 
-  folly::fbstring replace(TextView needle, TextView replacement,
-                          size_t count = -1) {
+  folly::fbvector<my_type> split(char const *needle) const {
+    return split(TextReadOperations<RawTextOwner>(needle));
+  }
+
+  template <typename T1, typename T2>
+  folly::fbstring replace(T1 needle, T2 replacement, size_t count = -1) {
     auto out = folly::fbstring{};
     auto needle_len = needle.code_units_count();
     if (needle_len == 0) {
-      out.append(__begin, __size);
+      out.append(code_units_begin(), code_units_count());
       return out;
     }
     auto last = code_units_begin();
     for (auto cur = code_units_begin();
          cur != code_units_end() - needle_len && count > 0;) {
-      if (TextView(__owner, cur, needle_len) == needle) {
+      if (0 ==
+          strncmp(cur, needle.code_units_begin(), needle.code_units_count())) {
         count--;
         out.append(last, cur - last);
-        out.append(replacement.__begin, replacement.__size);
+        out.append(replacement.code_units_begin(),
+                   replacement.code_units_count());
         cur += needle_len;
         last = cur;
       } else {
@@ -352,69 +413,95 @@ public:
     out.append(last, code_units_end() - last);
     return out;
   }
+
+  folly::fbstring replace(char const *needle, char const *replacement,
+                          size_t count = -1) {
+    return replace(TextReadOperations<RawTextOwner>(needle),
+                   TextReadOperations<RawTextOwner>(replacement), count);
+  }
 };
 
-using TextHolder = _RetainedTextView<TextView>;
+using TextView = TextReadOperations<RawTextOwner>;
+using SharedText = TextReadOperations<SharedTextOwner>;
 
 namespace literals {
 constexpr TextView operator"" _v(char const *self, size_t len) {
-  return TextView(nullptr, self, len);
+  return TextView(self, len);
 }
 }
-size_t len(TextView input) noexcept { return input.code_points_count(); }
+template <typename TextOwner>
+size_t len(TextReadOperations<TextOwner> input) noexcept {
+  return input.code_points_count();
+}
+size_t len(char const *input) noexcept { return len(TextView(input)); }
 
-std::ostream &operator<<(std::ostream &os, TextView const &value) {
+template <typename TextOwner>
+std::ostream &operator<<(std::ostream &os,
+                         TextReadOperations<TextOwner> const &value) {
   os.write(value.code_units_begin(), long(value.code_units_count()));
   return os;
 }
 
-bool operator==(TextView const &left, TextView const &right) {
+template <typename TextOwner1, typename TextOwner2>
+bool operator==(TextReadOperations<TextOwner1> const &left,
+                TextReadOperations<TextOwner2> const &right) {
   if (left.code_units_count() != right.code_units_count()) {
     return false;
   }
-  auto left_cur = left.code_units_begin();
-  auto right_cur = right.code_units_begin();
-  auto remaining = left.code_units_count();
-  while (remaining-- > 0) {
-    if (*left_cur != *right_cur) {
-      return false;
-    }
-    left_cur++;
-    right_cur++;
-  }
-  return true;
+  return 0 == strncmp(left.code_units_begin(), right.code_units_begin(),
+                      left.code_units_count());
 }
 
-bool operator!=(TextView const &left, TextView const &right) {
+template <typename TextOwner>
+bool operator==(TextReadOperations<TextOwner> const &left, char const *right) {
+  return left == TextView(right);
+}
+template <typename TextOwner>
+bool operator==(char const *left, TextReadOperations<TextOwner> const &right) {
+  return TextView(left) == right;
+}
+
+template <typename TextOwner1, typename TextOwner2>
+bool operator!=(TextReadOperations<TextOwner1> const &left,
+                TextReadOperations<TextOwner2> const &right) {
   return !(left == right);
 }
 
-class ConcatedTextViews : public vector<TextView> {
+template <typename TextOwner>
+bool operator!=(TextReadOperations<TextOwner> const &left, char const *right) {
+  return left != TextView(right);
+}
+template <typename TextOwner>
+bool operator!=(char const *left, TextReadOperations<TextOwner> const &right) {
+  return TextView(left) != right;
+}
+
+class ConcatedTexts : public vector<TextView> {
 public:
   using vector<TextView>::vector;
 
-  ConcatedTextViews(TextView const &text_view) { push_back(text_view); }
+  ConcatedTexts(TextView const &text) { push_back(text); }
 
   template <typename S> void to_str(S &out) const {
     auto len = size_t(0);
     for (auto const &view : *this) {
       len += view.code_units_count();
     }
-    out.resize(len);
+    out.reserve(len);
     char *cur = const_cast<char *>(out.data());
     for (auto const &view : *this) {
       auto view_len = view.code_units_count();
-      strncpy(cur, view.c_str(), view_len);
+      out.append(view.c_str(), view_len);
       cur += view_len;
     }
   }
 
-  ConcatedTextViews &operator+=(ConcatedTextViews const &that) {
+  ConcatedTexts &operator+=(ConcatedTexts const &that) {
     insert(end(), that.begin(), that.end());
     return *this;
   }
 
-  ConcatedTextViews &operator+=(TextView const &that) {
+  ConcatedTexts &operator+=(TextView const &that) {
     push_back(that);
     return *this;
   }
@@ -438,25 +525,24 @@ public:
   }
 };
 
-ConcatedTextViews operator+(TextView const &left, TextView const &right) {
-  auto views = ConcatedTextViews{};
+ConcatedTexts operator+(TextView const &left, TextView const &right) {
+  auto views = ConcatedTexts{};
   views.push_back(left);
   views.push_back(right);
   return views;
 }
 
-ConcatedTextViews operator+(ConcatedTextViews views, TextView const &one_view) {
+ConcatedTexts operator+(ConcatedTexts views, TextView const &one_view) {
   views.push_back(one_view);
   return views;
 }
 
-ConcatedTextViews operator+(TextView const &one_view, ConcatedTextViews views) {
+ConcatedTexts operator+(TextView const &one_view, ConcatedTexts views) {
   views.insert(views.begin(), one_view);
   return views;
 }
 
-ConcatedTextViews operator+(ConcatedTextViews left,
-                            ConcatedTextViews const &right) {
+ConcatedTexts operator+(ConcatedTexts left, ConcatedTexts const &right) {
   left.insert(left.end(), right.begin(), right.end());
   return left;
 }
@@ -465,8 +551,18 @@ ConcatedTextViews operator+(ConcatedTextViews left,
 
 namespace std {
 using pythonic::utf8::TextView;
+using pythonic::utf8::SharedText;
 template <> struct hash<TextView> {
   size_t operator()(TextView const &x) const {
+    size_t hash = 0;
+    for (auto cur = x.code_units_begin(); cur != x.code_units_end(); cur++) {
+      hash = (hash << 5) - hash + *cur;
+    }
+    return hash;
+  }
+};
+template <> struct hash<SharedText> {
+  size_t operator()(SharedText const &x) const {
     size_t hash = 0;
     for (auto cur = x.code_units_begin(); cur != x.code_units_end(); cur++) {
       hash = (hash << 5) - hash + *cur;
