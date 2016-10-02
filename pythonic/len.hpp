@@ -3,7 +3,6 @@
 #include "utf8/Utf8Encoded.hpp"
 
 namespace pythonic {
-inline namespace v1 {
 
 namespace view = ranges::view;
 
@@ -33,6 +32,5 @@ auto len = len_fn();
 
 template <typename T> auto operator|(T const &left, len_fn len) {
   return len(left);
-}
 }
 }

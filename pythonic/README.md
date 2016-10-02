@@ -11,3 +11,9 @@ get length of any container
 ```
 CHECK(3 == pyn::len({1,2,3}));
 ```
+
+## capitalize
+
+```
+CHECK(U8("Hello") == (U8("hello") | utf8::capitalize | utf8::to_text));
+```

@@ -21,6 +21,7 @@ add_executable(pythonic
     _vendor/catch-ext/include/catch_ext.hpp
     ../pythonic/utf8.hpp
     ../pythonic/utf8/Utf8Encoded.hpp
+    ../pythonic/utf8/capitalize.hpp
     ../pythonic/len.hpp
     ../pythonic/regexs.hpp)
 target_link_libraries( string pcre2-8 )

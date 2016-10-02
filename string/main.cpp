@@ -5,6 +5,7 @@
 #include "folly/FBString.h"
 #include "pythonic/len.hpp"
 #include "pythonic/utf8/Utf8Encoded.hpp"
+#include "pythonic/utf8/capitalize.hpp"
 #include <codecvt>
 #include <iostream>
 #include <limits>
@@ -14,6 +15,7 @@
 const auto a1 = numeric_limits<int>::digits;
 const auto a2 = integral_constant<int, 1>::value;
 namespace pyn = pythonic;
+namespace utf8 = pyn::utf8;
 
 TEST_CASE("len of empty") { CHECK(0 == pyn::len(U8(""))); }
 TEST_CASE("len of english") { CHECK(5 == (U8("hello") | pyn::len)); }
@@ -24,6 +26,10 @@ TEST_CASE("len of incomplete codepoint") {
 TEST_CASE("len of vector") {
   CHECK(3 == pyn::len(std::vector<int>{1, 2, 3}));
   CHECK(3 == pyn::len({1, 2, 3}));
+}
+
+TEST_CASE("capitalize") {
+  CHECK(U8("Hello") == (U8("hello") | utf8::capitalize | utf8::to_text));
 }
 
 // TEST_CASE("substr [0, 0)") { CHECK("" == ("hello"_v[{0, 0}])); }
