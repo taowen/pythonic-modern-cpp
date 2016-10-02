@@ -1,5 +1,4 @@
 #pragma once
-#include "Utf8Encoded.hpp"
 #include <range/v3/all.hpp>
 
 namespace pythonic {

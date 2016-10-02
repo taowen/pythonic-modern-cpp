@@ -5,6 +5,9 @@
 
 namespace pythonic {
 namespace utf8 {
+
+namespace view = ranges::view;
+
 template <typename T> class Utf8Encoded {
   using my_type = Utf8Encoded<T>;
 
@@ -57,6 +60,12 @@ bool operator==(Utf8Encoded<T1> const &left, Utf8Encoded<T2> const &right) {
   return left.data == right.data;
 }
 
+template <typename T>
+std::ostream &operator<<(std::ostream &os, Utf8Encoded<T> const &str) {
+  os << str.data;
+  return os;
+}
+
 TextView utf8_cast(char const *data) { return TextView{data}; }
 
 template <typename T> TextView utf8_cast(T data) { return TextView{data}; }
@@ -67,8 +76,9 @@ struct to_text_fn {
 public:
   template <typename Rng> Text operator()(Rng rng) const {
     Text text;
-    text.reserve(ranges::size(rng));
-    text.assign(rng.begin(), rng.end());
+    text.reserve(static_cast<Text::size_type>(ranges::size(rng)));
+    using I = ranges::range_common_iterator_t<Rng>;
+    text.assign(I{ranges::begin(rng)}, I{ranges::end(rng)});
     return text;
   }
 };

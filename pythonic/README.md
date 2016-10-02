@@ -17,3 +17,9 @@ CHECK(3 == pyn::len({1,2,3}));
 ```
 CHECK(U8("Hello") == (U8("hello") | utf8::capitalize | utf8::to_text));
 ```
+
+## center
+
+```
+CHECK(U8(" abc ") == (U8("abc") | utf8::center(5) | utf8::to_text));
+```

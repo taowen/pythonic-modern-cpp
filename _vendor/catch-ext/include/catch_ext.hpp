@@ -1,6 +1,7 @@
-#include "catch.hpp"
-#include "pythonic/utf8.hpp"
-#include "range/v3/all.hpp"
+#include <catch.hpp>
+#include <folly/FBString.h>
+#include <pythonic/utf8/Utf8Encoded.hpp>
+#include <range/v3/all.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -9,21 +10,21 @@ namespace Catch {
 using namespace pythonic;
 using namespace std;
 
-// utf8::ConcatedTexts describe(string const &str) {
-//  return "\"" + utf8::TextView(str) + "\"";
-//}
-// utf8::ConcatedTexts describe(char const *str) {
-//  return "\"" + utf8::TextView(str) + "\"";
-//}
-// utf8::ConcatedTexts describe(utf8::TextView str) { return "\"" + str + "\"";
-// }
-// utf8::ConcatedTexts describe(utf8::SharedText str) {
-//  return "\"" + utf8::TextView(str.code_units_begin(), str.code_units_count())
-//  +
-//         "\"";
-//}
+std::string describe(std::string_view str) {
+  auto desc = std::string(str.begin(), str.end());
+  return "\"" + desc + "\"";
+}
 
-template <typename T> string describe(const T &obj) { return to_string(obj); }
+std::string describe(folly::fbstring const &str) {
+  auto desc = std::string(str.begin(), str.end());
+  return "\"" + desc + "\"";
+}
+
+template <typename T> struct StringMaker<utf8::Utf8Encoded<T>> {
+  static std::string convert(utf8::Utf8Encoded<T> const &value) {
+    return describe(value.data);
+  }
+};
 
 template <typename key_type, typename value_type>
 struct StringMaker<unordered_map<key_type, value_type>> {
