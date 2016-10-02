@@ -7,6 +7,7 @@
 #include "pythonic/utf8/Utf8Encoded.hpp"
 #include "pythonic/utf8/capitalize.hpp"
 #include "pythonic/utf8/center.hpp"
+#include "pythonic/utf8/find.hpp"
 #include <codecvt>
 #include <iostream>
 #include <limits>
@@ -45,6 +46,12 @@ TEST_CASE("center left 0 right 1") {
 TEST_CASE("center left 0 right 2 tail 1") {
   CHECK(U8("abc12 ") ==
         (U8("abc") | utf8::center(6, U8("12")) | utf8::to_text));
+}
+
+TEST_CASE("find") {
+  //  auto f = utf8::find(U8("b"));
+  //  auto str = U8("abc") | f;
+  //  std::cout << str << std::endl;
 }
 
 // TEST_CASE("substr [0, 0)") { CHECK("" == ("hello"_v[{0, 0}])); }

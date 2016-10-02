@@ -23,6 +23,7 @@ add_executable(pythonic
     ../pythonic/utf8/Utf8Encoded.hpp
     ../pythonic/utf8/capitalize.hpp
     ../pythonic/utf8/center.hpp
+    ../pythonic/utf8/find.hpp
     ../pythonic/len.hpp
     ../pythonic/regexs.hpp)
 target_link_libraries( string pcre2-8 )

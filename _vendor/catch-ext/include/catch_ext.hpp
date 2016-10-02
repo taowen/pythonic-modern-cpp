@@ -22,7 +22,7 @@ std::string describe(folly::fbstring const &str) {
 
 template <typename T> struct StringMaker<utf8::Utf8Encoded<T>> {
   static std::string convert(utf8::Utf8Encoded<T> const &value) {
-    return describe(value.data);
+    return describe(value.utf8_encoded);
   }
 };
 

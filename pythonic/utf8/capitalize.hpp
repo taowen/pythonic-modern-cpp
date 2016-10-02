@@ -7,8 +7,7 @@ namespace utf8 {
 namespace view = ranges::view;
 
 struct capitalize_fn {
-public:
-  template <typename Rng> auto operator()(Rng rng) const {
+  template <typename Rng> auto operator()(Rng &&rng) const {
     auto head =
         rng | view::slice(0, 1) | view::transform([](auto c) -> decltype(c) {
           if ('a' <= c <= 'Z') {
@@ -21,6 +20,6 @@ public:
     return view::concat(head, tail);
   }
 };
-auto capitalize = view::view<capitalize_fn>();
+auto capitalize = utf8::Utf8View<capitalize_fn>();
 }
 }

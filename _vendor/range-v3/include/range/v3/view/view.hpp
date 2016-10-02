@@ -78,8 +78,9 @@ namespace ranges
             template<typename View>
             struct view : pipeable<view<View>>
             {
-            private:
+            protected:
                 View view_;
+            private:
                 friend pipeable_access;
 
                 template<typename Rng, typename ...Rest>
