@@ -13,12 +13,14 @@ include_directories(_vendor/boost/include)
 include_directories(${PROJECT_BINARY_DIR}/pcre)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -stdlib=libc++")
 if (USE_MODULES)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -stdlib=libc++ -fno-autolink -fmodules -fmodules-cache-path=${CMAKE_SOURCE_DIR}/build")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-autolink -fmodules -fmodules-cache-path=${CMAKE_SOURCE_DIR}/build")
 endif(USE_MODULES)
 set(SOURCE_FILES main.cpp)
 add_executable(string ${SOURCE_FILES})
 add_executable(pythonic
     _vendor/catch-ext/include/catch_ext.hpp
-    _vendor/pythonic/include/pythonic/utf8.hpp
-    _vendor/pythonic/include/pythonic/regexs.hpp)
+    ../pythonic/utf8.hpp
+    ../pythonic/utf8/Utf8Encoded.hpp
+    ../pythonic/len.hpp
+    ../pythonic/regexs.hpp)
 target_link_libraries( string pcre2-8 )
