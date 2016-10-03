@@ -36,3 +36,23 @@ CHECK(1 == (U8("abc") | utf8::find(U8("b"))));
 CHECK((std::vector<size_t>{0, 3}) ==
         (U8("abcab") | utf8::finditer(U8("ab")) | ranges::to_vector));
 ```
+
+## code_units
+
+```
+auto chars = std::vector<char>{};
+for (auto c : U8("abc") | utf8::code_units) {
+    chars.push_back(c);
+}
+CHECK((std::vector<char>{'a', 'b', 'c'}) == chars);
+```
+
+## code_points
+
+```
+auto chars = std::vector<utf8::TextView>{};
+for (auto c : U8("中文") | utf8::code_points) {
+    chars.push_back(c);
+}
+CHECK((std::vector<utf8::TextView>{U8("中"), U8("文")}) == chars);
+```

@@ -12,6 +12,11 @@ template <typename T> class Utf8Encoded {
 public:
   using utf8_range_type = T;
   T utf8_encoded;
+
+  operator Utf8Encoded<folly::fbstring>() {
+    return Utf8Encoded<folly::fbstring>{
+        folly::fbstring(utf8_encoded.begin(), utf8_encoded.size())};
+  }
 };
 
 using Text = Utf8Encoded<folly::fbstring>;
@@ -145,5 +150,12 @@ struct to_text_fn {
   }
 };
 auto to_text = Utf8View<to_text_fn>();
+
+struct to_text_view_fn {
+  template <typename Rng> auto operator()(Rng &&rng) const {
+    return std::string_view(ranges::begin(rng), ranges::size(rng));
+  }
+};
+auto to_text_view = Utf8View<to_text_view_fn>();
 }
 }
