@@ -8,6 +8,7 @@
 #include "pythonic/utf8/capitalize.hpp"
 #include "pythonic/utf8/center.hpp"
 #include "pythonic/utf8/find.hpp"
+#include "pythonic/utf8/finditer.hpp"
 #include <codecvt>
 #include <iostream>
 #include <limits>
@@ -69,6 +70,13 @@ TEST_CASE("center left 0 right 2 tail 1") {
 TEST_CASE("find") {
   CHECK(1 == utf8::find(U8("abc"), U8("b")));
   CHECK(1 == (U8("abc") | utf8::find(U8("b"))));
+}
+
+TEST_CASE("finditer") {
+  CHECK((std::vector<size_t>{0, 3}) ==
+        (utf8::finditer(U8("abcab"), U8("ab")) | ranges::to_vector));
+  CHECK((std::vector<size_t>{0, 3}) ==
+        (U8("abcab") | utf8::finditer(U8("ab")) | ranges::to_vector));
 }
 
 // TEST_CASE("substr [0, 0)") { CHECK("" == ("hello"_v[{0, 0}])); }

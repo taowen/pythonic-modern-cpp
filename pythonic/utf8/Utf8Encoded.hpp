@@ -41,6 +41,14 @@ template <typename T> constexpr auto utf8_cast(T &&data) {
 #define U8(X) pythonic::utf8::utf8_cast(u8##X)
 
 namespace concepts {
+struct CharRange : ranges::concepts::refines<ranges::concepts::Range> {
+  template <typename T>
+  using value_t = ranges::concepts::Readable::value_t<iterator_t<T>>;
+
+  template <typename T>
+  auto requires_(T &&t) -> decltype(ranges::concepts::valid_expr(
+      ranges::concepts::same_type('0', value_t<T>())));
+};
 struct Utf8EncodedRange {
   template <typename T>
   auto requires_(T &&t) -> decltype(ranges::concepts::valid_expr(
@@ -69,6 +77,8 @@ using Utf8EncodedSizedRange =
 template <typename T>
 using Utf8EncodedRandomAccessRange =
     ranges::concepts::models<concepts::Utf8EncodedRandomAccessRange, T>;
+template <typename T>
+using CharRange = ranges::concepts::models<concepts::CharRange, T>;
 
 #define IF_CONSTEXPR                                                           \
   if                                                                           \
@@ -90,7 +100,7 @@ private:
   static auto pipe(Rng &&rng, Vw &&v) {
     auto result =
         v.view_(std::forward<decltype(rng.utf8_encoded)>(rng.utf8_encoded));
-    IF_CONSTEXPR(ranges::Range<decltype(result)>()) {
+    IF_CONSTEXPR(CharRange<decltype(result)>()) {
       return Utf8Encoded<decltype(result)>{result};
     }
     else {
@@ -108,7 +118,7 @@ public:
     auto result =
         view_(std::forward<decltype(rng.utf8_encoded)>(rng.utf8_encoded),
               std::forward<Rest>(rest)...);
-    IF_CONSTEXPR(ranges::Range<decltype(result)>()) {
+    IF_CONSTEXPR(CharRange<decltype(result)>()) {
       return Utf8Encoded<decltype(result)>{result};
     }
     else {
