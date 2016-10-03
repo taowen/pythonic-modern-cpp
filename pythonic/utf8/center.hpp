@@ -1,4 +1,5 @@
 #pragma once
+#include "Utf8Encoded.hpp"
 #include <range/v3/all.hpp>
 
 namespace pythonic {
@@ -10,7 +11,8 @@ struct center_fn {
 private:
   friend view::view_access;
 
-  template <typename Rng = Utf8Encoded<std::string_view>>
+  template <typename Rng = Utf8Encoded<std::string_view>,
+            CONCEPT_REQUIRES_(utf8::Utf8EncodedSizedRange<Rng>())>
   static auto bind(center_fn center, size_t width,
                    Rng &&padding = utf8::utf8_cast(std::string_view(" "))) {
     return ranges::make_pipeable(std::bind(center, std::placeholders::_1, width,
@@ -19,7 +21,8 @@ private:
 
 public:
   template <typename Rng1, typename Rng2 = Utf8Encoded<std::string_view>,
-            CONCEPT_REQUIRES_(ranges::SizedRange<Rng1>())>
+            CONCEPT_REQUIRES_(ranges::SizedRange<Rng1>()),
+            CONCEPT_REQUIRES_(utf8::Utf8EncodedSizedRange<Rng2>())>
   auto
   operator()(Rng1 &&rng, size_t width,
              Rng2 &&padding = utf8::utf8_cast(std::string_view(" "))) const {

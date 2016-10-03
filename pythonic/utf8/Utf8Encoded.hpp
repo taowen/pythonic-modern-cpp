@@ -10,6 +10,7 @@ namespace view = ranges::view;
 
 template <typename T> class Utf8Encoded {
 public:
+  using utf8_range_type = T;
   T utf8_encoded;
 };
 
@@ -33,11 +34,45 @@ std::ostream &operator<<(std::ostream &os, Utf8Encoded<T> const &str) {
 
 constexpr TextView utf8_cast(char const *data) { return TextView{data}; }
 
-template <typename T> constexpr TextView utf8_cast(T data) {
-  return TextView{data};
+template <typename T> constexpr auto utf8_cast(T &&data) {
+  return Utf8Encoded<T>{std::forward<T>(data)};
 }
 
 #define U8(X) pythonic::utf8::utf8_cast(u8##X)
+
+namespace concepts {
+struct Utf8EncodedRange {
+  template <typename T>
+  auto requires_(T &&t) -> decltype(ranges::concepts::valid_expr(
+      ranges::concepts::model_of<ranges::concepts::Range>(t.utf8_encoded)));
+};
+struct Utf8EncodedSizedRange {
+  template <typename T>
+  auto requires_(T &&t) -> decltype(ranges::concepts::valid_expr(
+      ranges::concepts::model_of<ranges::concepts::SizedRange>(
+          t.utf8_encoded)));
+};
+struct Utf8EncodedRandomAccessRange {
+  template <typename T>
+  auto requires_(T &&t) -> decltype(ranges::concepts::valid_expr(
+      ranges::concepts::model_of<ranges::concepts::RandomAccessRange>(
+          t.utf8_encoded)));
+};
+}
+
+template <typename T>
+using Utf8EncodedRange =
+    ranges::concepts::models<concepts::Utf8EncodedRange, T>;
+template <typename T>
+using Utf8EncodedSizedRange =
+    ranges::concepts::models<concepts::Utf8EncodedSizedRange, T>;
+template <typename T>
+using Utf8EncodedRandomAccessRange =
+    ranges::concepts::models<concepts::Utf8EncodedRandomAccessRange, T>;
+
+#define IF_CONSTEXPR                                                           \
+  if                                                                           \
+  constexpr
 
 template <typename View> struct Utf8View : ranges::pipeable<Utf8View<View>> {
 private:
@@ -45,60 +80,48 @@ private:
   friend ranges::pipeable_access;
 
   template <typename Rng, typename... Rest>
-  using ViewConcept = meta::and_<view::ViewableRange<Rng>,
-                                 ranges::Function<View, Rng, Rest...>>;
+  using ViewConcept = meta::and_<
+      Utf8EncodedRange<Rng>,
+      ranges::Function<View, typename Rng::utf8_range_type, Rest...>>;
 
   // Pipeing requires range arguments or lvalue containers.
-  template <typename Rng, typename Vw, CONCEPT_REQUIRES_(ViewConcept<Rng>())>
+  template <typename Rng, typename Vw,
+            CONCEPT_REQUIRES_(Utf8EncodedRange<Rng>())>
   static auto pipe(Rng &&rng, Vw &&v) {
-    return v.view_(std::forward<Rng>(rng));
+    auto result =
+        v.view_(std::forward<decltype(rng.utf8_encoded)>(rng.utf8_encoded));
+    IF_CONSTEXPR(ranges::Range<decltype(result)>()) {
+      return Utf8Encoded<decltype(result)>{result};
+    }
+    else {
+      return result;
+    }
   }
 
-  template <typename Rng, typename Vw>
-  static auto pipe(Utf8Encoded<Rng> &&rng, Vw &&v) {
-    auto result = v.view_(std::forward<Rng>(rng.utf8_encoded));
-    return Utf8Encoded<decltype(result)>{result};
-  }
-
-#ifndef RANGES_DOXYGEN_INVOKED
-  // For better error messages:
-  template <typename Rng, typename Vw, CONCEPT_REQUIRES_(!ViewConcept<Rng>())>
-  static void pipe(Rng &&, Vw &&) {
-    CONCEPT_ASSERT_MSG(ranges::Range<Rng>(),
-                       "The type Rng must be a model of the Range concept.");
-    // BUGBUG This isn't a very helpful message. This is probably the wrong
-    // place
-    // to put this check:
-    CONCEPT_ASSERT_MSG(ranges::Function<View, Rng>(),
-                       "This view is not callable with this range type.");
-    static_assert(
-        ranges::View<Rng>() || std::is_lvalue_reference<Rng>(),
-        "You can't pipe an rvalue container into a view. First, save"
-        "the container into a named variable, and then pipe it to the view.");
-  }
-#endif
 public:
   Utf8View() = default;
   Utf8View(View a) : view_(std::move(a)) {}
-  // Calling directly requires View arguments or lvalue containers.
+
   template <typename Rng, typename... Rest,
             CONCEPT_REQUIRES_(ViewConcept<Rng, Rest...>())>
   auto operator()(Rng &&rng, Rest &&... rest) const {
-    return view_(std::forward<Rng>(rng), std::forward<Rest>(rest)...);
+    auto result =
+        view_(std::forward<decltype(rng.utf8_encoded)>(rng.utf8_encoded),
+              std::forward<Rest>(rest)...);
+    IF_CONSTEXPR(ranges::Range<decltype(result)>()) {
+      return Utf8Encoded<decltype(result)>{result};
+    }
+    else {
+      return result;
+    }
   }
+
   // Currying overload.
   template <typename... Ts, typename V = View>
   auto operator()(Ts &&... ts) const {
     auto func =
         view::view_access::impl<V>::bind(view_, std::forward<Ts>(ts)...);
     return Utf8View<decltype(func)>{func};
-  }
-
-  template <typename Rng, typename... Rest,
-            CONCEPT_REQUIRES_(ranges::Range<Rng>())>
-  auto operator()(Utf8Encoded<Rng> &&rng, Rest &&... rest) const {
-    return view_(std::forward<Rng>(rng.utf8_encoded),
-                 std::forward<Rest>(rest)...);
   }
 };
 

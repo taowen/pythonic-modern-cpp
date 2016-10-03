@@ -1,4 +1,6 @@
 #pragma once
+
+#include "Utf8Encoded.hpp"
 #include <range/v3/all.hpp>
 
 namespace pythonic {
@@ -7,7 +9,8 @@ namespace utf8 {
 namespace view = ranges::view;
 
 struct capitalize_fn {
-  template <typename Rng> auto operator()(Rng &&rng) const {
+  template <typename Rng, CONCEPT_REQUIRES_(ranges::Range<Rng>())>
+  auto operator()(Rng &&rng) const {
     auto head =
         rng | view::slice(0, 1) | view::transform([](auto c) -> decltype(c) {
           if ('a' <= c <= 'Z') {

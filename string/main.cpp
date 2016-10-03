@@ -20,38 +20,55 @@ namespace pyn = pythonic;
 namespace utf8 = pyn::utf8;
 namespace view = ranges::view;
 
-TEST_CASE("len of empty") { CHECK(0 == pyn::len(U8(""))); }
-TEST_CASE("len of english") { CHECK(5 == (U8("hello") | pyn::len)); }
-TEST_CASE("len of chinese") { CHECK(2 == pyn::len(U8("中文"))); }
+TEST_CASE("len of empty") {
+  CHECK(0 == pyn::len(U8("")));
+  CHECK(0 == (U8("") | pyn::len));
+}
+
+TEST_CASE("len of english") {
+  CHECK(5 == pyn::len(U8("hello")));
+  CHECK(5 == (U8("hello") | pyn::len));
+}
+
+TEST_CASE("len of chinese") {
+  CHECK(2 == pyn::len(U8("中文")));
+  CHECK(2 == (U8("中文") | pyn::len));
+}
+
 TEST_CASE("len of incomplete codepoint") {
   CHECK(3 == pyn::len(U8("中文\xe4")));
+  CHECK(3 == (U8("中文\xe4") | pyn::len));
 }
+
 TEST_CASE("len of vector") {
   CHECK(3 == pyn::len(std::vector<int>{1, 2, 3}));
-  CHECK(3 == pyn::len({1, 2, 3}));
+  CHECK(3 == (std::vector<int>{1, 2, 3} | pyn::len));
 }
 
 TEST_CASE("capitalize") {
+  CHECK(U8("Hello") == (utf8::capitalize(U8("hello")) | utf8::to_text));
   CHECK(U8("Hello") == (U8("hello") | utf8::capitalize | utf8::to_text));
 }
 
 TEST_CASE("center left 1 right 1") {
+  CHECK(U8(" abc ") == (utf8::center(U8("abc"), 5) | utf8::to_text));
   CHECK(U8(" abc ") == (U8("abc") | utf8::center(5) | utf8::to_text));
 }
 
 TEST_CASE("center left 0 right 1") {
+  CHECK(U8("abc ") == (utf8::center(U8("abc"), 4) | utf8::to_text));
   CHECK(U8("abc ") == (U8("abc") | utf8::center(4) | utf8::to_text));
 }
 
 TEST_CASE("center left 0 right 2 tail 1") {
   CHECK(U8("abc12 ") ==
         (U8("abc") | utf8::center(6, U8("12")) | utf8::to_text));
+  CHECK(U8("abc12 ") == (utf8::center(U8("abc"), 6, U8("12")) | utf8::to_text));
 }
 
 TEST_CASE("find") {
-  //  auto f = utf8::find(U8("b"));
-  //  auto str = U8("abc") | f;
-  //  std::cout << str << std::endl;
+  CHECK(1 == utf8::find(U8("abc"), U8("b")));
+  CHECK(1 == (U8("abc") | utf8::find(U8("b"))));
 }
 
 // TEST_CASE("substr [0, 0)") { CHECK("" == ("hello"_v[{0, 0}])); }
