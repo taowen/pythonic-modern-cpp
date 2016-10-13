@@ -6,7 +6,7 @@
 #include <json.hpp>
 #include <range/v3/all.hpp>
 
-const int abc = std::__1::numeric_limits<int>::digits;
+const int abc = std::numeric_limits<int>::digits;
 
 using namespace std;
 using namespace ranges;

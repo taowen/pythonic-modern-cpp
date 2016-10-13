@@ -17,16 +17,4 @@ if (USE_MODULES)
 endif(USE_MODULES)
 set(SOURCE_FILES main.cpp)
 add_executable(string ${SOURCE_FILES})
-add_executable(pythonic
-    _vendor/catch-ext/include/catch_ext.hpp
-    ../pythonic/utf8.hpp
-    ../pythonic/utf8/Utf8Encoded.hpp
-    ../pythonic/utf8/capitalize.hpp
-    ../pythonic/utf8/center.hpp
-    ../pythonic/utf8/find.hpp
-    ../pythonic/utf8/finditer.hpp
-    ../pythonic/utf8/code_units.hpp
-    ../pythonic/utf8/code_points.hpp
-    ../pythonic/len.hpp
-    ../pythonic/regexs.hpp)
 target_link_libraries( string pcre2-8 )
