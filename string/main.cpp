@@ -12,6 +12,7 @@
 #include "pythonic/utf8/find.hpp"
 #include "pythonic/utf8/finditer.hpp"
 #include "pythonic/utf8/count.hpp"
+#include "pythonic/utf8/endswith.hpp"
 #include <codecvt>
 #include <iostream>
 #include <limits>
@@ -101,6 +102,11 @@ TEST_CASE("code_points") {
 TEST_CASE("count") {
     CHECK(2 == utf8::count(U8("aa"), U8("a")));
     CHECK(2 == (U8("aa") | utf8::count(U8("a"))));
+}
+
+TEST_CASE("endswith") {
+    CHECK(utf8::endswith(U8("hello"), U8("lo")));
+    CHECK(!utf8::endswith(U8("hello"), U8("l")));
 }
 
 // TEST_CASE("substr [0, 0)") { CHECK("" == ("hello"_v[{0, 0}])); }

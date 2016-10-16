@@ -55,7 +55,7 @@ TEST_CASE("005") {
   //! [005]
   auto colors = vector<string>{"red", "green", "blue", "yellow"};
   for (auto const & [ i, color ] : view::zip(view::iota(0), colors)) {
-    cout << i << " " << color << endl;
+    cout << i << " " << color << endl; 
   }
   //! [005]
 }
