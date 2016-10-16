@@ -1,36 +1,24 @@
 #pragma once
 
 #include "utf8/Utf8Encoded.hpp"
+#include <range/v3/all.hpp>
 
 namespace pythonic {
 
-namespace view = ranges::view;
-
-struct len_fn {
-public:
-  template <typename T>
-  size_t operator()(utf8::Utf8Encoded<T> input) const noexcept {
+template <typename Rng, CONCEPT_REQUIRES_(utf8::Utf8EncodedRange<Rng>())>
+size_t len(Rng&& rng) {
     auto length = size_t(0);
-    auto n = input.utf8_encoded.size();
-    for (auto cur = input.utf8_encoded.begin(); n > 0; n--, cur++) {
-      if ((*cur & 0xc0) != 0x80) {
-        length++;
-      }
+    auto n = rng.utf8_encoded.size();
+    for (auto cur = rng.utf8_encoded.begin(); n > 0; n--, cur++) {
+        if ((*cur & 0xc0) != 0x80) {
+            length++;
+        }
     }
     return length;
-  }
-  template <typename T> size_t operator()(T input) const noexcept {
-    return input.size();
-  }
-  template <typename T>
-  size_t operator()(std::initializer_list<T> input) const noexcept {
-    return input.size();
-  }
-};
+}
 
-auto len = len_fn();
-
-template <typename T> auto operator|(T const &left, len_fn len) {
-  return len(left);
+template <typename Rng, CONCEPT_REQUIRES_(ranges::Range<Rng>())>
+size_t len(Rng&& rng) {
+    return ranges::size(rng);
 }
 }
