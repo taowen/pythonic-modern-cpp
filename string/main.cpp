@@ -15,6 +15,7 @@
 #include "pythonic/utf8/endswith.hpp"
 #include "pythonic/utf8/sub.hpp"
 #include "pythonic/utf8/expandtabs.hpp"
+#include "pythonic/utf8/index.hpp"
 #include <codecvt>
 #include <iostream>
 #include <limits>
@@ -90,6 +91,11 @@ TEST_CASE("sub") {
 TEST_CASE("expandtabs") {
     CHECK("  hello"_u == (utf8::expandtabs("\thello"_u, 2)));
     CHECK("1 hello"_u == (utf8::expandtabs("1\thello"_u, 2)));
+}
+
+TEST_CASE("index") {
+    CHECK(1 == utf8::index("abc"_u, "b"_u).value());
+    CHECK(!bool(utf8::index("abc"_u, "d"_u)));
 }
 
 
