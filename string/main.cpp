@@ -14,6 +14,7 @@
 #include "pythonic/utf8/count.hpp"
 #include "pythonic/utf8/endswith.hpp"
 #include "pythonic/utf8/sub.hpp"
+#include "pythonic/utf8/expandtabs.hpp"
 #include <codecvt>
 #include <iostream>
 #include <limits>
@@ -49,6 +50,7 @@ TEST_CASE("center") {
 
 TEST_CASE("find") {
     CHECK(1 == utf8::find("abc"_u, "b"_u));
+    CHECK(std::string::npos == utf8::find("abc"_u, "d"_u));
 }
 
 TEST_CASE("finditer") {
@@ -81,9 +83,13 @@ TEST_CASE("endswith") {
     CHECK(!utf8::endswith("hello"_u, "l"_u));
 }
 
-TEST_CASE("replace with func") {
-    auto result = utf8::sub("hello"_u, "l"_u, [](auto i){ return "_"_u; });
-    CHECK("he__o"_u == result);
+TEST_CASE("sub") {
+    CHECK("he__o"_u == (utf8::sub("hello"_u, "l"_u, [](auto i){ return "_"_u; })));
+}
+
+TEST_CASE("expandtabs") {
+    CHECK("  hello"_u == (utf8::expandtabs("\thello"_u, 2)));
+    CHECK("1 hello"_u == (utf8::expandtabs("1\thello"_u, 2)));
 }
 
 
