@@ -6,9 +6,23 @@
 namespace pythonic {
 namespace utf8 {
 
+namespace concepts {
+
+struct CharRange : ranges::concepts::refines<ranges::concepts::Range> {
+    template <typename T>
+    using value_t = ranges::concepts::Readable::value_t<iterator_t<T>>;
+
+    template <typename T>
+    auto requires_(T &&t) -> decltype(ranges::concepts::valid_expr(
+                                          ranges::concepts::same_type('0', value_t<T>())));
+};
+}
+template <typename T>
+using CharRange = ranges::concepts::models<concepts::CharRange, T>;
+
 namespace view = ranges::view;
 
-template <typename T> class Utf8Encoded {
+template <typename T, CONCEPT_REQUIRES_(CharRange<T>())> class Utf8Encoded {
 public:
     using utf8_range_type = T;
     T utf8_encoded;
@@ -49,14 +63,6 @@ template <typename T> constexpr auto utf8_cast(T &&data) {
 #define U8(X) pythonic::utf8::utf8_cast(u8##X)
 
 namespace concepts {
-struct CharRange : ranges::concepts::refines<ranges::concepts::Range> {
-    template <typename T>
-    using value_t = ranges::concepts::Readable::value_t<iterator_t<T>>;
-
-    template <typename T>
-    auto requires_(T &&t) -> decltype(ranges::concepts::valid_expr(
-                                          ranges::concepts::same_type('0', value_t<T>())));
-};
 struct Utf8EncodedRange {
     template <typename T>
     auto requires_(T &&t) -> decltype(ranges::concepts::valid_expr(
@@ -85,8 +91,6 @@ using Utf8EncodedSizedRange =
 template <typename T>
 using Utf8EncodedRandomAccessRange =
     ranges::concepts::models<concepts::Utf8EncodedRandomAccessRange, T>;
-template <typename T>
-using CharRange = ranges::concepts::models<concepts::CharRange, T>;
 
 template <typename Rng, CONCEPT_REQUIRES_(ranges::Range<Rng>())> auto to_text(Rng &&rng) {
     folly::fbstring text;
@@ -101,25 +105,11 @@ template <typename Rng, CONCEPT_REQUIRES_(Utf8EncodedRange<Rng>())> auto to_text
     return utf8_cast(to_text(rng.utf8_encoded));
 }
 
-struct LazilyTag {
-};
-
-const LazilyTag* Lazily = nullptr;
-
-template <typename Rng, typename IsLazily=int>
-auto return_lazily(Rng && rng, IsLazily * is_lazily = nullptr) {
-    if constexpr (std::is_same<const utf8::LazilyTag, IsLazily>::value) {
-        return utf8_cast(std::forward<Rng>(rng));
-    } else {
-        return utf8_cast(to_text(std::move(rng)));
-    }
-}
-
 namespace literals {
-    constexpr auto operator"" _u ( char const* c, size_t l )
-    {
-        return utf8_cast(std::string_view(c, l));
-    }
+constexpr auto operator"" _u ( char const* c, size_t l )
+{
+    return utf8_cast(std::string_view(c, l));
+}
 }
 
 }

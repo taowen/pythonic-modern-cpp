@@ -13,6 +13,7 @@
 #include "pythonic/utf8/finditer.hpp"
 #include "pythonic/utf8/count.hpp"
 #include "pythonic/utf8/endswith.hpp"
+#include "pythonic/utf8/sub.hpp"
 #include <codecvt>
 #include <iostream>
 #include <limits>
@@ -26,41 +27,23 @@ namespace utf8 = pyn::utf8;
 namespace view = ranges::view;
 using namespace pyn::utf8::literals;
 
-TEST_CASE("len of empty") {
+
+TEST_CASE("len") {
     CHECK(0 == pyn::len(""_u));
-}
-
-TEST_CASE("len of english") {
     CHECK(5 == pyn::len("hello"_u));
-}
-
-TEST_CASE("len of chinese") {
     CHECK(2 == pyn::len("中文"_u));
-}
-
-TEST_CASE("len of incomplete codepoint") {
     CHECK(3 == pyn::len("中文\xe4"_u));
-}
-
-TEST_CASE("len of vector") {
     CHECK(3 == pyn::len(std::vector<int> {1, 2, 3}));
 }
 
 TEST_CASE("capitalize") {
     CHECK("Hello"_u == utf8::capitalize("hello"_u));
-    CHECK("Hello"_u == utf8::to_text(utf8::capitalize("hello"_u, utf8::Lazily)));
+    CHECK("中文"_u == utf8::capitalize("中文"_u));
 }
 
-TEST_CASE("center left 1 right 1") {
+TEST_CASE("center") {
     CHECK(" abc "_u == utf8::center("abc"_u, 5));
-    CHECK(" abc "_u == utf8::to_text(utf8::center("abc"_u, 5, " "_u, utf8::Lazily)));
-}
-
-TEST_CASE("center left 0 right 1") {
     CHECK("abc "_u == utf8::center("abc"_u, 4));
-}
-
-TEST_CASE("center left 0 right 2 tail 1") {
     CHECK("abc12 "_u == utf8::center("abc"_u, 6, "12"_u));
 }
 
@@ -94,8 +77,13 @@ TEST_CASE("count") {
 }
 
 TEST_CASE("endswith") {
-    CHECK(utf8::endswith(U8("hello"), U8("lo")));
-    CHECK(!utf8::endswith(U8("hello"), U8("l")));
+    CHECK(utf8::endswith("hello"_u, "lo"_u));
+    CHECK(!utf8::endswith("hello"_u, "l"_u));
+}
+
+TEST_CASE("replace with func") {
+    auto result = utf8::sub("hello"_u, "l"_u, [](auto i){ return "_"_u; });
+    CHECK("he__o"_u == result);
 }
 
 

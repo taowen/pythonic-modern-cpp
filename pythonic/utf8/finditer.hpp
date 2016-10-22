@@ -14,10 +14,10 @@ class FindView : public ranges::view_facade<FindView<Rng1, Rng2>> {
 
     friend ranges::range_access;
 
-    decltype(Rng1().begin()) __haystack_begin;
-    decltype(Rng1().begin()) __haystack_cur;
-    decltype(Rng1().end()) __haystack_end;
-    decltype(Rng2().begin()) __needle;
+    decltype(std::declval<Rng1>().begin()) __haystack_begin;
+    decltype(std::declval<Rng1>().begin()) __haystack_cur;
+    decltype(std::declval<Rng1>().end()) __haystack_end;
+    decltype(std::declval<Rng2>().begin()) __needle;
     size_t __found_at;
     size_t __nsize;
     size_t __skip;
